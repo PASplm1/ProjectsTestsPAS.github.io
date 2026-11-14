@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Вода и тепло</title>
+<style>
+:root{--bg:#eceff4;--panel:#fff;--fg:#1b1e25;--mut:#7b8294;--blk:150,158,175;--stn:192,191,189;--acc:#1b1e25;--accfg:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0d11;--panel:#16181f;--fg:#e8eaf0;--mut:#6b7285;--blk:52,57,70;--stn:94,94,96;--acc:#e8eaf0;--accfg:#0c0d11}}
+:root[data-theme="dark"]{--bg:#0c0d11;--panel:#16181f;--fg:#e8eaf0;--mut:#6b7285;--blk:52,57,70;--stn:94,94,96;--acc:#e8eaf0;--accfg:#0c0d11}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:500 10px/1 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body{display:flex;flex-direction:column}
+#hud{padding:12px 18px 6px;color:var(--mut);font-size:12px;text-align:right;font-variant-numeric:tabular-nums;min-height:14px;pointer-events:none}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+canvas{display:block;touch-action:none;background:var(--panel);border-radius:12px}
+#dock{display:flex;gap:8px;justify-content:safe center;overflow-x:auto;scrollbar-width:none;padding:0 10px;margin:8px 0 10px}
+#dock::-webkit-scrollbar{display:none}
+.g{display:flex;gap:2px;padding:5px;background:var(--panel);border-radius:20px;flex:none}
+button{appearance:none;border:0;background:none;color:var(--mut);font:inherit;width:48px;padding:9px 0 8px;border-radius:15px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s;white-space:nowrap}
+button.on{background:var(--acc);color:var(--accfg)}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
+i{width:14px;height:14px;border-radius:4px;background:var(--c);box-sizing:border-box}
+i.r{border-radius:50%}
+i.o{background:none;border:1.5px solid currentColor}
+button[data-t=water] i{transition:border-radius .25s ease}
+button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
+.tp{position:fixed;left:0;top:0;pointer-events:none;opacity:0;transition:opacity .25s ease;padding:7px 11px 7px 9px;background:var(--panel);color:var(--fg);border-radius:12px;font-size:14px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px;box-shadow:0 4px 18px rgba(0,0,0,.25);white-space:nowrap}
+.tp b{width:9px;height:9px;border-radius:50%;background:var(--tc,transparent)}
+#dlg,#sv{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:5}
+#dlg.s,#sv.s{display:flex}
+#dlg>div,#sv>div{background:var(--panel);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;width:min(280px,80vw);font-size:14px}
+#sv>div{width:min(330px,88vw);padding:14px;gap:8px}
+#dlg p,#sv p{margin:0 0 4px 4px}
+#dlg span{color:var(--mut);font-size:12px}
+#dlg input{font:inherit;font-size:20px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--mut);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#dlg .q{display:flex;gap:8px}
+#dlg button{flex:1;width:auto;flex-direction:row;justify-content:center;font-size:14px;padding:12px 0;background:var(--bg)}
+#dlg button.on{background:var(--acc);color:var(--accfg)}
+#sv small{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+#sv .slot{width:100%;flex-direction:column;align-items:flex-start;gap:0;padding:12px;font-size:14px;background:var(--bg);color:var(--fg);border-radius:14px;text-align:left}
+#sv .row{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:14px;padding:6px 6px 6px 12px;font-size:14px}
+#sv .nm{flex:1}
+#sv .row button{width:auto;flex-direction:row;padding:10px 11px;font-size:12px;background:var(--panel);color:var(--fg);border-radius:11px}
+</style>
+</head>
+<body>
+<div id="hud"></div>
+<div id="stage"><canvas id="c"></canvas></div>
+<div id="dock">
+<div class="g">
+<button data-t="water"><i class="r" style="--c:#2f8cff"></i>Вода</button>
+<button data-t="steel" class="on"><i style="--c:#8a93a6"></i>Сталь</button>
+<button data-t="stone"><i style="--c:#b9b8b6"></i>Камень</button>
+<button data-t="lava"><i class="r" style="--c:#ff4d1a"></i>Лава</button>
+<button data-t="erase"><i class="o"></i>Ластик</button>
+<button data-a="shape"><i style="--c:currentColor"></i>Блок</button>
+</div>
+<div class="g">
+<button data-a="size"><i class="r" style="--c:currentColor;width:12px;height:12px;margin:1px 0"></i>Размер</button>
+<button data-m="0" class="on"><i style="--c:currentColor"></i>Полный</button>
+<button data-m="1"><i class="o"></i>Полый</button>
+</div>
+<div class="g">
+<button data-t="heat"><i class="r" style="--c:#ff6a2b"></i>Нагрев</button>
+<button data-t="cold"><i class="r" style="--c:#40b0ff"></i>Холод</button>
+<button data-t="therm" style="width:54px"><i style="--c:currentColor;width:6px;height:14px;border-radius:3px"></i>Термометр</button>
+</div>
+<div class="g">
+<button data-a="gyro"><i style="--c:currentColor;width:12px;height:12px;margin:1px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg)"></i>Гироскоп</button>
+<button data-a="zg" style="width:60px"><i class="o r"></i>Невесомость</button>
+<button data-a="real" style="width:54px"><i style="--c:currentColor;width:11px;height:11px;margin:1.5px;transform:rotate(45deg)"></i>Обычная</button>
+<button data-t="gcen"><i class="r o" style="background:radial-gradient(circle,currentColor 0 2px,transparent 2.5px)"></i>Центр</button>
+</div>
+<div class="g">
+<button data-a="clear"><i class="o r"></i>Очистить</button>
+<button data-a="fill"><i style="--c:currentColor;opacity:.45"></i>Залить</button>
+</div>
+<div class="g">
+<button data-a="save" style="width:64px"><i class="o" style="width:16px;height:11px;margin:1.5px 0;border-radius:3px;background:radial-gradient(circle at 30% 50%,currentColor 0 1.5px,transparent 2px),radial-gradient(circle at 70% 50%,currentColor 0 1.5px,transparent 2px)"></i>Сохранения</button>
+</div>
+</div>
+<div id="tip" class="tp"><b></b><span></span></div>
+<div id="dlg"><div><p>Температура лавы, °C</p><input id="tin" type="number" inputmode="numeric" min="-273" max="1000000"><span>От −273 до 1 000 000. Ниже 100 °C лава застынет в сталь</span><div class="q"><button id="no">Отмена</button><button id="ok" class="on">OK</button></div></div></div>
+<div id="sv"><div><p>Сохранения</p><div id="svb" style="display:flex;flex-direction:column;gap:8px"></div></div></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),dock=document.getElementById('dock'),hud=document.getElementById('hud'),tip=document.getElementById('tip'),tv=tip.lastChild,dlg=document.getElementById('dlg'),tin=document.getElementById('tin'),lb=document.querySelector('[data-t="lava"]'),gb=document.querySelector('[data-a="gyro"]'),zb=document.querySelector('[data-a="zg"]'),svEl=document.getElementById('sv'),svb=document.getElementById('svb');
+const tip2=tip.cloneNode(true);tip2.removeAttribute('id');document.body.appendChild(tip2);const tv2=tip2.lastChild;
+const MAX=14000,KP=.035,KN=.09,RHO0=3.4,AIR=20,ICE=[165,212,240],TMAX=1e6;
+const cell=3,RT=44,h=5,inv=1/h,R=h*.4,G=h*.03,VM=h*.9;
+/* Порог, после которого новые капли воды становятся крупнее, и максимальный прирост размера */
+const BIG=2500,GROW=.5,BIGSPAN=2500,HOLD=600;
+/* Анимация загрузки идёт по квадратной сетке блоков BK×BK клеток; фронт волны — «майнкрафтовский» круг (кольца целых радиусов).
+   BANDR — ширина растворения (в кольцах), DUR — время прохода волны, DEL — задержка волны постройки, SG — длительность одной из 3 стадий яркости (мс).
+   MPX — пикселей в метре для инструмента «Центр» */
+const BK=4,BANDR=4,DUR=2600,DEL=550,SG=280,MPX=30;
+/* Твёрдое тело — мелкая сетка «пикселей», у каждого своя температура. 1 сталь, 2 камень, 3 лёд.
+   KK — теплопроводность, LS — потери в воздух, HC — теплообмен с частицами, MELT — плавление, LQ — тип расплава */
+const KK=[0,.2,.004,.05],LS=[0,.0003,.004,.0005],HC=[0,.12,.0024,.03],MELT=[0,1000,500,0],LQ=[0,1,2,0];
+const HK=new Float32Array(16);for(let a=1;a<4;a++)for(let b=1;b<4;b++)HK[a*4+b]=2*KK[a]*KK[b]/(KK[a]+KK[b]);
+/* Частицы: 0 вода, 1 расплав стали, 2 лава из камня, 3 пар, 4 лава (инструмент).
+   VIS — вязкость у точки плавления (с ростом температуры падает на 25% каждые 100 °C) */
+const VIS=[0,1,1,0,1],DAMP=[.997,.997,.985,.99,.985],ML=[0,1000,500,0,500],MK=[0,1,2,0,2],LP=[.0008,.0008,.0008,.0008,.004];
+const X=new Float32Array(MAX),Y=new Float32Array(MAX),PX=new Float32Array(MAX),PY=new Float32Array(MAX),VX=new Float32Array(MAX),VY=new Float32Array(MAX),TP=new Float32Array(MAX),K=new Uint8Array(MAX),PG=new Uint8Array(MAX),NF=new Uint8Array(MAX),SZ=new Float32Array(MAX).fill(1),HT=new Uint16Array(MAX),PT=new Float32Array(256);
+const nh=new Float32Array(300),nb=new Int32Array(300),nd=new Float32Array(300),GN=new Uint16Array(256),GX=new Float32Array(256),GY=new Float32Array(256);
+let BS=4,BR=6,FS=2/3,lvl=2,inside=0,lavaT=null,lm=0,gon=0,gsx=0,gsy=1,gtx=0,gty=1,lgid=0,wc=0,ginv=1/h,fps=0,fcnt=0,ft=0,rc=0,zg=0,real=0,thm=null;
+let n=0,tool='steel',mat=1,cols=0,rows=0,W=0,Hh=0,S,T,T2,PIN,head,nxt,gw,gh,dpr=1,BASE=[52,57,70],BASE2=[94,94,96],fr=0,LUT=null,off,octx,img,u32;
+let ptr=0,lx=-1,ly=-1,cx0=0,cy0=0,hold=0,ticks=0,shape=0,src=0,srcs=[],hx=0,hy=0,paused=false,pgc=0;
+let an=null,AT=null,DST=null,ORD=null,fxEnd=0,gcT=0,gcOn=0,gcR=0,gcK=1;
+
+const mix=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
+const rgb=c=>`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
+/* Чем горячее, тем краснее: основа → тёмно-красный → красный → оранжевый → жёлтый */
+const ST=[[0,0,0,0],[.2,125,72,64],[.45,215,45,30],[.7,255,125,35],[.9,255,205,100],[1.1,255,240,180]];
+function hotc(b,u){
+  if(u<=0)return b;let a=[0,b[0],b[1],b[2]];
+  for(let k=1;k<ST.length;k++){const q=ST[k];if(u<=q[0]){const w=(u-a[0])/(q[0]-a[0]);return[a[1]+(q[1]-a[1])*w,a[2]+(q[2]-a[2])*w,a[3]+(q[3]-a[3])*w]}a=q}
+  return[255,240,180];
+}
+const uu=(t,m)=>(t-AIR)/(MELT[m]-AIR)*.8;
+/* Холод: только оттенки синего, темнее воды, чтобы не сливаться с ней и не белеть */
+function tcol(m,t){
+  const b=m===1?BASE:m===2?BASE2:ICE;
+  if(t>=AIR)return hotc(b,uu(t,m));
+  return mix(b,[38,82,205],Math.min((AIR-t)/90,1));
+}
+const bcol=i=>rgb(tcol(S[i],T[i]));
+/* Таблица цветов по температуре (-200…1600 °C), чтобы быстро красить тысячи пикселей */
+function buildLUT(){LUT=[null];for(let m=1;m<4;m++){const a=new Uint32Array(1801);for(let k=0;k<1801;k++){const c=tcol(m,k-200);a[k]=(255<<24|(c[2]|0)<<16|(c[1]|0)<<8|(c[0]|0))>>>0}LUT.push(a)}}
+function theme(){
+  const s=getComputedStyle(document.documentElement),p=v=>s.getPropertyValue(v).split(',').map(Number),a=p('--blk'),b=p('--stn');let ch=!LUT;
+  if(a.length===3&&!a.some(isNaN)&&a+''!==BASE+''){BASE=a;ch=1}
+  if(b.length===3&&!b.some(isNaN)&&b+''!==BASE2+''){BASE2=b;ch=1}
+  if(ch)buildLUT();
+}
+/* Размер новой капли воды: до BIG частиц обычный, дальше растёт до +GROW */
+const szf=()=>wc<=BIG?1:1+GROW*Math.min(1,(wc-BIG)/BIGSPAN);
+function rem(i){n--;X[i]=X[n];Y[i]=Y[n];PX[i]=PX[n];PY[i]=PY[n];VX[i]=VX[n];VY[i]=VY[n];TP[i]=TP[n];K[i]=K[n];PG[i]=PG[n];SZ[i]=SZ[n];HT[i]=HT[n];NF[i]=NF[n]}
+function add(x,y,k,t,vy){if(n>=MAX)return;X[n]=PX[n]=x;Y[n]=PY[n]=y;VX[n]=0;VY[n]=vy||0;K[n]=k;TP[n]=t;PG[n]=0;HT[n]=0;NF[n]=0;SZ[n]=k?1:szf();if(!k)wc++;n++}
+
+function setup(){
+  const sw=stage.clientWidth,sh=stage.clientHeight;if(!sw||!sh)return;
+  const nc=Math.max(40,Math.floor(sw/cell)),nr=Math.max(40,Math.floor(sh/cell)),oc=cols,orr=rows,oS=S,oT=T;
+  cols=nc;rows=nr;W=cols*cell;Hh=rows*cell;
+  S=new Uint8Array(cols*rows);T=new Float32Array(cols*rows).fill(AIR);T2=new Float32Array(cols*rows).fill(AIR);PIN=new Uint8Array(cols*rows);
+  if(oS)for(let r=0;r<Math.min(rows,orr);r++)for(let c=0;c<Math.min(cols,oc);c++){S[r*cols+c]=oS[r*oc+c];T[r*cols+c]=oT[r*oc+c]}
+  gw=Math.ceil(W*inv)+2;gh=Math.ceil(Hh*inv)+2;head=new Int32Array(gw*gh);nxt=new Int32Array(MAX);
+  AT=new Float64Array(cols*rows);an=null;
+  dpr=Math.min(devicePixelRatio||1,2);cv.width=Math.round(W*dpr);cv.height=Math.round(Hh*dpr);cv.style.width=W+'px';cv.style.height=Hh+'px';
+  off=document.createElement('canvas');off.width=cols;off.height=rows;octx=off.getContext('2d');img=octx.createImageData(cols,rows);u32=new Uint32Array(img.data.buffer);
+  for(let i=n-1;i>=0;i--)if(X[i]>W||Y[i]>Hh)rem(i);
+  srcs=srcs.filter(s=>s.x<W&&s.y<Hh);
+  theme();
+}
+function seed(){
+  const ft=8,wh=Math.min(70,rows-1),rp=h*.25;
+  for(let r=rows-ft;r<rows;r++)for(let c=0;c<cols;c++)S[r*cols+c]=1;
+  for(let r=rows-wh;r<rows;r++)for(let c=0;c<ft;c++){S[r*cols+c]=1;S[r*cols+cols-1-c]=1}
+  const s=h*.62,fy=(rows-ft)*cell;
+  for(let y=fy-56;y<fy-rp;y+=s)for(let x=ft*cell+rp;x<W-ft*cell-rp;x+=s)add(x+Math.random(),y+Math.random(),0,AIR);
+}
+
+function grid(){
+  head.fill(-1);
+  const x=X,y=Y,hd=head,nx=nxt,gW=gw,gw1=gw-1,gh1=gh-1,gI=ginv,cnt=n;
+  for(let i=0;i<cnt;i++){
+    let gx=(x[i]*gI)|0,gy=(y[i]*gI)|0;
+    gx=gx<0?0:gx>gw1?gw1:gx;gy=gy<0?0:gy>gh1?gh1:gy;
+    const k=gx+gy*gW;nx[i]=hd[k];hd[k]=i;
+  }
+}
+/* Двойная плотность (Clavet) + позиционная вязкость для расплавов; частицы обмениваются теплом с соседями.
+   Радиус взаимодействия пары — среднее размеров частиц, поэтому крупные капли занимают больше места.
+   Вода и пар не отталкиваются, но слегка тормозят друг друга. */
+function ddr(){
+  grid();
+  const x=X,y=Y,px=PX,py=PY,tp=TP,kk=K,sz=SZ,hd=head,nx=nxt,nbA=nb,ndA=nd,nhA=nh,gW=gw,gw1=gw-1,gh1=gh-1,gI=ginv,cnt=n,hh=h,kp=KP,kn=KN,r0=RHO0,vis=VIS,ml=ML;
+  for(let i=0;i<cnt;i++){
+    const xi=x[i],yi=y[i],ki=kk[i],si=sz[i],st=ki===3;
+    let gx=(xi*gI)|0,gy=(yi*gI)|0;
+    gx=gx<0?0:gx>gw1?gw1:gx;gy=gy<0?0:gy>gh1?gh1:gy;
+    const cy0=gy>0?gy-1:0,cy1=gy<gh1?gy+1:gh1,cx0=gx>0?gx-1:0,cx1=gx<gw1?gx+1:gw1;
+    let rho=0,rn=0,m=0,sc=0;
+    for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++)
+      for(let j=hd[cy*gW+cx];j>=0&&m<300;j=nx[j]){
+        if(j===i)continue;
+        const dx=x[j]-xi,dy=y[j]-yi,d2=dx*dx+dy*dy,hj=hh*(si+sz[j])*.5;
+        if((kk[j]===3)!==st){if(d2<hj*hj)sc++;continue}
+        if(d2<hj*hj&&d2>1e-6){const r=Math.sqrt(d2),q=1-r/hj,q2=q*q;rho+=q2;rn+=q2*q;nbA[m]=j;ndA[m]=r;nhA[m++]=hj;const e=(tp[j]-tp[i])*.04;tp[i]+=e;tp[j]-=e}
+      }
+    const P=kp*(rho-r0),PN=kn*rn,vs=vis[ki]?vis[ki]*Math.exp(-.0028768*Math.max(0,tp[i]-ml[ki])):0;let ax=0,ay=0;
+    if(vs){
+      const ix=xi-px[i],iy=yi-py[i];
+      for(let k=0;k<m;k++){
+        const j=nbA[k],r=ndA[k],hj=nhA[k],q=1-r/hj,D=.5*hj*(P*q+PN*q*q)/r,dx=(x[j]-xi)*D,dy=(y[j]-yi)*D,w=.5*vs*q,ux=((x[j]-px[j])-ix)*w,uy=((y[j]-py[j])-iy)*w;
+        x[j]+=dx-ux;y[j]+=dy-uy;ax+=ux-dx;ay+=uy-dy;
+      }
+    }else{
+      for(let k=0;k<m;k++){
+        const j=nbA[k],r=ndA[k],hj=nhA[k],q=1-r/hj,D=.5*hj*(P*q+PN*q*q)/r,dx=(x[j]-xi)*D,dy=(y[j]-yi)*D;
+        x[j]+=dx;y[j]+=dy;ax-=dx;ay-=dy;
+      }
+    }
+    x[i]+=ax;y[i]+=ay;
+    if(sc&&!st)px[i]+=(x[i]-px[i])*Math.min(sc,8)*.008;
+  }
+}
+
+function collide(i){
+  const sol=S,cs=cols,rs=rows,ce=cell,tg=T,tp=TP,hc=HC,rp=h*.25*SZ[i],rr=rp*rp,rr17=rp*rp*1.7,w=W;
+  let x=X[i],y=Y[i];
+  x=x<rp?rp:x>w-rp?w-rp:x;
+  const c0=(x/ce)|0,r0=(y/ce)|0;
+  for(let r=r0-1;r<=r0+1;r++){
+    if(r<0||r>=rs)continue;
+    for(let c=c0-1;c<=c0+1;c++){
+      if(c<0||c>=cs||!sol[r*cs+c])continue;
+      const l=c*ce,t=r*ce,rt=l+ce,b=t+ce,nx=x<l?l:x>rt?rt:x,ny=y<t?t:y>b?b:y,dx=x-nx,dy=y-ny,d2=dx*dx+dy*dy;
+      if(d2>=rr17)continue;
+      const q=r*cs+c,e=(tg[q]-tp[i])*hc[sol[q]];tp[i]+=e;tg[q]-=e*.4;
+      if(d2>=rr)continue;
+      if(d2>1e-9){const d=Math.sqrt(d2),k=(rp-d)/d;x+=dx*k;y+=dy*k}
+      else{
+        let best=1e9,bx=0,by=0;
+        for(const[dd,ox,oy]of[[x-l,-1,0],[rt-x,1,0],[y-t,0,-1],[b-y,0,1]]){
+          const cc=c+ox,rr2=r+oy;
+          if(cc<0||rr2<0||cc>=cs||rr2>=rs||sol[rr2*cs+cc])continue;
+          if(dd<best){best=dd;bx=ox;by=oy}
+        }
+        if(best>1e8){
+          /* частица застряла внутри твёрдого: не удаляем, а переносим в ближайшую свободную клетку */
+          for(let w2=2;w2<=12;w2++)for(let ar=-w2;ar<=w2;ar++)for(let ac=-w2;ac<=w2;ac++){
+            if(Math.max(Math.abs(ar),Math.abs(ac))!==w2)continue;
+            const r2=r+ar,c2=c+ac;
+            if(r2<0||c2<0||r2>=rs||c2>=cs||sol[r2*cs+c2])continue;
+            X[i]=PX[i]=(c2+.5)*ce;Y[i]=PY[i]=(r2+.5)*ce;return true;
+          }
+          return true;
+        }
+        x+=bx*(best+rp);y+=by*(best+rp);
+      }
+    }
+  }
+  X[i]=x;Y[i]=y;return true;
+}
+
+function melt(i){
+  const m=S[i],c=i%cols,r=(i/cols)|0;
+  add((c+.5)*cell+Math.random()-.5,(r+.5)*cell+Math.random()-.5,LQ[m],Math.max(T[i],MELT[m])+(LQ[m]?80:1));
+  S[i]=0;T[i]=AIR;
+}
+/* Теплопроводность между пикселями: средняя гармоническая проводимость (камень почти не пропускает тепло) */
+function heat(){
+  const sol=S,cs=cols,rs=rows,pin=PIN,hk=HK;let ta=T,tb=T2;
+  for(let it=0;it<8;it++){
+    for(let r=0;r<rs;r++)for(let c=0;c<cs;c++){
+      const i=r*cs+c,m=sol[i];if(!m)continue;
+      if(pin[i]){tb[i]=ta[i];continue}
+      const t=ta[i],a=m*4;let s=0,j,o;
+      if(c>0&&(o=sol[j=i-1]))s+=hk[a+o]*(ta[j]-t);
+      if(c<cs-1&&(o=sol[j=i+1]))s+=hk[a+o]*(ta[j]-t);
+      if(r>0&&(o=sol[j=i-cs]))s+=hk[a+o]*(ta[j]-t);
+      if(r<rs-1&&(o=sol[j=i+cs]))s+=hk[a+o]*(ta[j]-t);
+      tb[i]=t+s;
+    }
+    const q=ta;ta=tb;tb=q;
+  }
+  T=ta;T2=tb;
+  const tt=T,ls=LS,mt=MELT,len=sol.length;
+  for(let i=0;i<len;i++){
+    const m=sol[i];if(!m)continue;
+    if(!pin[i])tt[i]+=(AIR-tt[i])*ls[m];
+    if(tt[i]>=mt[m]&&n<MAX-2)melt(i);
+  }
+}
+/* Что получится из частицы при остывании: расплавы → твёрдое, лава-инструмент → сталь ниже 100 °C */
+const fz=i=>{const k=K[i];return k===3?0:k===0?(TP[i]<-1?3:0):k===4?(TP[i]<100?1:0):TP[i]<ML[k]?k:0};
+function stamp(x,y,m,t){
+  const rr=2.3,c0=Math.max(0,Math.floor((x-rr)/cell)),c1=Math.min(cols-1,Math.floor((x+rr)/cell)),r0=Math.max(0,Math.floor((y-rr)/cell)),r1=Math.min(rows-1,Math.floor((y+rr)/cell));
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    const q=r*cols+c;if(S[q])continue;
+    const dx=(c+.5)*cell-x,dy=(r+.5)*cell-y;
+    if(dx*dx+dy*dy<=rr*rr){S[q]=m;T[q]=t}
+  }
+}
+/* Застывшая частица оставляет пиксели твёрдого материала ровно там, где была: форма сохраняется */
+function freeze(){for(let i=n-1;i>=0;i--){const f=fz(i);if(f){stamp(X[i],Y[i],f,TP[i]);rem(i)}}}
+
+/* ===== «Реальная» физика твёрдых тел =====
+   Кусок материала, не связанный с краем поля, становится жёстким телом: центр масс, момент инерции,
+   скорость и вращение. Он падает по направлению гравитации (гироскоп учитывается; в невесомости
+   гравитации нет), при ударе об опору получает момент от смещённого центра масс — заваливается и
+   поворачивается. Когда тело успокоилось у опоры, оно «застывает» в поле как обычное твёрдое. */
+let LB,STK,CB,OW;const bodies=[],GB=.05;let bid=0,hn=0,hx_=0,hy_=0,hnx=0,hny=0;
+function ensure(){
+  const N=cols*rows;
+  if(!LB||LB.length!==N){LB=new Int32Array(N);STK=new Int32Array(N);CB=new Int32Array(N);OW=new Uint16Array(N);bodies.length=0}
+}
+function rast(b){
+  const c=Math.cos(b.a),s=Math.sin(b.a),rr=b.rmax+1,g0x=Math.max(0,Math.floor(b.x-rr)),g1x=Math.min(cols-1,Math.floor(b.x+rr)),g0y=Math.max(0,Math.floor(b.y-rr)),g1y=Math.min(rows-1,Math.floor(b.y+rr));
+  let k_=0;
+  for(let gy=g0y;gy<=g1y;gy++)for(let gx=g0x;gx<=g1x;gx++){
+    const dx=gx+.5-b.x,dy=gy+.5-b.y,sx=Math.floor(c*dx+s*dy+b.comx),sy=Math.floor(-s*dx+c*dy+b.comy);
+    if(sx<b.ox||sy<b.oy||sx>=b.ox+b.bw||sy>=b.oy+b.bh)continue;
+    const k=b.map[(sy-b.oy)*b.bw+sx-b.ox];if(k<0||!b.mt[k])continue;
+    const q=gy*cols+gx;if(S[q])continue;
+    S[q]=b.mt[k];T[q]=b.tm[k];OW[q]=b.id;b.RQ[k_]=q;b.RK[k_++]=k;
+  }
+  b.rn=k_;
+}
+function unras(b){
+  for(let i=0;i<b.rn;i++){
+    const q=b.RQ[i];if(OW[q]!==b.id)continue;
+    const k=b.RK[i];
+    if(!S[q]){if(b.mt[k]){b.mt[k]=0;b.live--}}else{b.mt[k]=S[q];b.tm[k]=T[q]}
+    S[q]=0;OW[q]=0;T[q]=AIR;
+  }
+  b.rn=0;
+}
+function mk(cn){
+  let sx=0,sy=0,x0=1e9,x1=-1,y0=1e9,y1=-1;
+  for(let k=0;k<cn;k++){const q=CB[k],c=q%cols,r=(q/cols)|0;sx+=c+.5;sy+=r+.5;if(c<x0)x0=c;if(c>x1)x1=c;if(r<y0)y0=r;if(r>y1)y1=r}
+  const comx=sx/cn,comy=sy/cn,bw=x1-x0+1,bh=y1-y0+1,map=new Int32Array(bw*bh).fill(-1),mt=new Uint8Array(cn),tm=new Float32Array(cn),lx=new Float32Array(cn),ly=new Float32Array(cn);
+  let I=cn/6,rm=0;
+  for(let k=0;k<cn;k++){
+    const q=CB[k],c=q%cols,r=(q/cols)|0;
+    map[(r-y0)*bw+c-x0]=k;mt[k]=S[q];tm[k]=T[q];lx[k]=c+.5-comx;ly[k]=r+.5-comy;
+    const d2=lx[k]*lx[k]+ly[k]*ly[k];I+=d2;if(d2>rm)rm=d2;S[q]=0;T[q]=AIR;
+  }
+  rm=Math.sqrt(rm)+.8;
+  const per=[];
+  for(let k=0;k<cn;k++){
+    const q=CB[k],c=q%cols-x0,r=((q/cols)|0)-y0;
+    if(c===0||r===0||c===bw-1||r===bh-1||map[r*bw+c-1]<0||map[r*bw+c+1]<0||map[(r-1)*bw+c]<0||map[(r+1)*bw+c]<0)per.push(k);
+  }
+  const sz=(2*Math.ceil(rm)+8)**2;
+  bid=bid%65000+1;
+  const b={id:bid,cn,live:cn,mt,tm,lx,ly,ox:x0,oy:y0,bw,bh,map,comx,comy,per:Int32Array.from(per),I,rmax:rm,x:comx,y:comy,a:0,vx:0,vy:0,w:0,rest:0,RQ:new Int32Array(sz),RK:new Int32Array(sz),rn:0};
+  bodies.push(b);rast(b);
+}
+/* Проверка столкновения контура тела в позе (x,y,угол) с твёрдым; считает точку и нормаль контакта */
+function hitT(b,nx,ny,na){
+  const c=Math.cos(na),s=Math.sin(na),lx=b.lx,ly=b.ly,mt=b.mt,per=b.per;
+  hn=0;hx_=hy_=hnx=hny=0;
+  for(let i=0;i<per.length;i++){
+    const k=per[i];if(!mt[k])continue;
+    const px=nx+c*lx[k]-s*ly[k],py=ny+s*lx[k]+c*ly[k],gx=Math.floor(px),gy=Math.floor(py);
+    if(gx<0||gy<0||gx>=cols||gy>=rows){hn++;hx_+=px;hy_+=py;hnx+=gx<0?1:gx>=cols?-1:0;hny+=gy<0?1:gy>=rows?-1:0;continue}
+    const q=gy*cols+gx;if(!S[q])continue;
+    hn++;hx_+=px;hy_+=py;
+    if(gx>0&&!S[q-1])hnx--;if(gx<cols-1&&!S[q+1])hnx++;if(gy>0&&!S[q-cols])hny--;if(gy<rows-1&&!S[q+cols])hny++;
+  }
+  return hn;
+}
+/* Импульс в точке контакта: гасит скорость вглубь опоры и создаёт вращение, если центр масс смещён */
+function contact(b){
+  let nx=hnx,ny=hny,l=Math.hypot(nx,ny);
+  if(l<1e-6){l=Math.hypot(b.vx,b.vy)||1;nx=-b.vx/l;ny=-b.vy/l}else{nx/=l;ny/=l}
+  const rx=hx_/hn-(b.x+b.vx),ry=hy_/hn-(b.y+b.vy),vn=(b.vx-b.w*ry)*nx+(b.vy+b.w*rx)*ny;
+  if(vn>=0)return;
+  const rn_=rx*ny-ry*nx,j=-1.05*vn/(1/b.cn+rn_*rn_/b.I);
+  b.vx+=j*nx/b.cn;b.vy+=j*ny/b.cn;b.w+=rn_*j/b.I;
+  const tx=-ny,ty=nx,vt=(b.vx-b.w*ry)*tx+(b.vy+b.w*rx)*ty,rt=rx*ty-ry*tx,jt=Math.max(-.6*j,Math.min(.6*j,-vt/(1/b.cn+rt*rt/b.I)));
+  b.vx+=jt*tx/b.cn;b.vy+=jt*ty/b.cn;b.w+=rt*jt/b.I;
+}
+function touchA(b){
+  for(let i=0;i<b.rn;i++){
+    const q=b.RQ[i],c=q%cols,r=(q/cols)|0;
+    if(c===0||c===cols-1||r===0||r===rows-1)return true;
+    for(let k=0;k<8;k++){const d=q+NY[k]*cols+NX[k];if(S[d]&&!OW[d]&&LB[d]===-1)return true}
+  }
+  return false;
+}
+function mergeB(b,bi){
+  unras(b);
+  const q4=Math.PI/2,ar=Math.round(b.a/q4)*q4;
+  if(Math.abs(b.a-ar)<.25){
+    const c=Math.round(Math.cos(ar)),s=Math.round(Math.sin(ar));let k0=0;
+    while(k0<b.cn&&!b.mt[k0])k0++;
+    if(k0<b.cn){
+      const px=b.x+c*b.lx[k0]-s*b.ly[k0],py=b.y+s*b.lx[k0]+c*b.ly[k0],dx=Math.floor(px)+.5-px,dy=Math.floor(py)+.5-py;
+      if(!hitT(b,b.x+dx,b.y+dy,ar)){b.x+=dx;b.y+=dy;b.a=ar}
+    }
+  }
+  rast(b);
+  for(let i=0;i<b.rn;i++){const q=b.RQ[i];if(OW[q]===b.id)OW[q]=0}
+  bodies.splice(bi,1);
+}
+function freezeAll(){
+  if(!OW)return;
+  for(const b of bodies)for(let i=0;i<b.rn;i++){const q=b.RQ[i];if(OW[q]===b.id)OW[q]=0}
+  bodies.length=0;
+}
+function dropBodies(){bodies.length=0;if(OW)OW.fill(0)}
+/* Поиск свободных кусков: всё, что не связано с краем поля, превращается в тело */
+const NX=[-1,1,0,0,-1,1,-1,1],NY=[0,0,-1,1,-1,-1,1,1];
+function detect(){
+  const N=cols*rows;LB.fill(0);let sp=0;
+  const pu=q=>{if(S[q]&&!OW[q]&&!LB[q]){LB[q]=-1;STK[sp++]=q}};
+  for(let c=0;c<cols;c++){pu(c);pu((rows-1)*cols+c)}
+  for(let r=0;r<rows;r++){pu(r*cols);pu(r*cols+cols-1)}
+  while(sp){
+    const q=STK[--sp],c=q%cols,r=(q/cols)|0;
+    for(let k=0;k<8;k++){const cc=c+NX[k],rr=r+NY[k];if(cc>=0&&rr>=0&&cc<cols&&rr<rows)pu(rr*cols+cc)}
+  }
+  let id=0;
+  for(let q0=0;q0<N;q0++){
+    if(!S[q0]||OW[q0]||LB[q0])continue;
+    id++;let cn=0;sp=0;LB[q0]=id;STK[sp++]=q0;
+    while(sp){
+      const q=STK[--sp],c=q%cols,r=(q/cols)|0;CB[cn++]=q;
+      for(let k=0;k<8;k++){
+        const cc=c+NX[k],rr=r+NY[k];if(cc<0||rr<0||cc>=cols||rr>=rows)continue;
+        const d=rr*cols+cc;if(S[d]&&!OW[d]&&!LB[d]){LB[d]=id;STK[sp++]=d}
+      }
+    }
+    if(cn<=4000)mk(cn);
+  }
+}
+function stepBodies(){
+  const gm=zg?0:GB,dr=zg?.995:.998;
+  for(let bi=bodies.length-1;bi>=0;bi--){
+    const b=bodies[bi];
+    if(!b.vx&&!b.vy&&!b.w&&!gm&&!gcOn)continue;
+    unras(b);
+    if(b.live<=0){bodies.splice(bi,1);continue}
+    b.vx=(b.vx+gm*gsx)*dr;b.vy=(b.vy+gm*gsy)*dr;b.w*=.99;
+    if(gcOn){
+      const rg=gcR/cell,dx=lx/cell-b.x,dy=ly/cell-b.y,d=Math.hypot(dx,dy);
+      if(d<rg&&d>.5){const f=3*GB*gcK*(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+    }
+    const sp=Math.hypot(b.vx,b.vy);if(sp>.7){b.vx*=.7/sp;b.vy*=.7/sp}
+    const wm=.5/b.rmax;if(b.w>wm)b.w=wm;else if(b.w<-wm)b.w=-wm;
+    if(!hitT(b,b.x+b.vx,b.y+b.vy,b.a+b.w)){b.x+=b.vx;b.y+=b.vy;b.a+=b.w;b.rest=0}
+    else{
+      contact(b);
+      if(!hitT(b,b.x+b.vx,b.y+b.vy,b.a+b.w)){b.x+=b.vx;b.y+=b.vy;b.a+=b.w}
+      b.rest=(Math.hypot(b.vx,b.vy)<.06&&Math.abs(b.w)<.012)?b.rest+1:0;
+    }
+    rast(b);
+    if(b.rest>=20&&touchA(b))mergeB(b,bi);
+  }
+}
+function physics(){ensure();if(!zg&&!(ptr&&drawTool())&&++rc%2===0)detect();if(bodies.length)stepBodies()}
+
+function stepFrame(){
+  heat();
+  gcOn=ptr&&tool==='gcen'?1:0;if(gcOn){gcR=(3+.25*gcT)*MPX;gcK=1+.25*gcT}
+  if(real)physics();
+  if(++fr%8===0)freeze();
+  const hs=ptr&&(tool==='heat'||tool==='cold'),x=X,y=Y,px=PX,py=PY,vx_=VX,vy_=VY,tp=TP,kk=K,pg=PG,sz=SZ,ht=HT,lp=LP,pt=PT;
+  let w=0,sm=1;
+  for(let i=0;i<n;i++){
+    const k=kk[i];
+    /* пар удерживает температуру ≥100 °C в течение HOLD кадров (10 с) и только потом может остывать */
+    if(k===3&&ht[i]>0){ht[i]--;if(tp[i]<100)tp[i]=100}
+    else if(pg[i])tp[i]=pt[pg[i]];
+    else if(!(hs&&Math.hypot(x[i]-lx,y[i]-ly)<RT))tp[i]+=(AIR-tp[i])*lp[k];
+    if(k===0){if(tp[i]>=100){kk[i]=3;ht[i]=HOLD}}else if(k===3&&!ht[i]&&tp[i]<95)kk[i]=0;
+    if(kk[i]===0||kk[i]===3)w++;
+    if(sz[i]>sm)sm=sz[i];
+  }
+  wc=w;ginv=1/(h*sm);
+  const VM2=VM*VM,dt=.5,dmp=DAMP,lo=-h*2.5,hi=Hh+h*2.5;
+  gsx=Math.abs(gtx-gsx)<1e-4?gtx:gsx+(gtx-gsx)*.2;gsy=Math.abs(gty-gsy)<1e-4?gty:gsy+(gty-gsy)*.2;
+  const gxx=zg?0:gsx,gyy=zg?0:gsy;
+  for(let s=0;s<3;s++){
+    const cnt=n;
+    for(let i=0;i<cnt;i++){
+      const ga=kk[i]===3?-G*.7*Math.min(1,Math.max(.1,.25+(tp[i]-100)*.0025)):G;
+      let vx=vx_[i]+ga*gxx*dt,vy=vy_[i]+ga*gyy*dt;
+      if(gcOn){const dx=lx-x[i],dy=ly-y[i],d=Math.hypot(dx,dy);if(d<gcR&&d>1){const f=3*G*gcK*(1-d/gcR)*dt,q=1-.02*(1-d/gcR);vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
+      const v2=vx*vx+vy*vy;
+      if(v2>VM2){const k=VM/Math.sqrt(v2);vx*=k;vy*=k}
+      vx_[i]=vx;vy_[i]=vy;px[i]=x[i];py[i]=y[i];x[i]+=vx*dt;y[i]+=vy*dt;
+    }
+    ddr();
+    for(let i=0;i<n;i++){
+      if(y[i]<lo||y[i]>hi){rem(i);i--;continue}
+      collide(i);
+    }
+    for(let i=0;i<n;i++){const d=dmp[kk[i]]/dt;vx_[i]=(x[i]-px[i])*d;vy_[i]=(y[i]-py[i])*d}
+  }
+}
+
+const cellAt=(x,y)=>{const c=Math.floor(x/cell),r=Math.floor(y/cell);return c<0||r<0||c>=cols||r>=rows?-1:r*cols+c};
+function circ(x,y,f){
+  const c0=Math.max(Math.floor((x-RT)/cell),0),c1=Math.min(Math.floor((x+RT)/cell),cols-1),r0=Math.max(Math.floor((y-RT)/cell),0),r1=Math.min(Math.floor((y+RT)/cell),rows-1);
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const dx=(c+.5)*cell-x,dy=(r+.5)*cell-y;if(dx*dx+dy*dy<=RT*RT)f(r*cols+c)}
+}
+/* Температура в точке: пиксель твёрдого, среднее по частицам в радиусе r, а в пустоте — температура воздуха */
+function probe(x,y,r){
+  const i=cellAt(x,y);
+  if(i>=0&&S[i])return[T[i],bcol(i)];
+  const r2=r*r;let s=0,m=0;
+  for(let k=0;k<n;k++){const dx=X[k]-x,dy=Y[k]-y;if(dx*dx+dy*dy<=r2){s+=TP[k];m++}}
+  return m?[s/m,'#2f8cff']:[AIR,'transparent'];
+}
+/* Форма кисти: «круг» — пиксели в радиусе, «блок» — квадрат из пикселей по сетке. Размер задаёт кнопка «Размер» */
+function area(x,y,f){
+  let c0,c1,r0,r1;
+  if(shape){c0=Math.max(Math.floor((x-BR)/cell),0);c1=Math.min(Math.floor((x+BR)/cell),cols-1);r0=Math.max(Math.floor((y-BR)/cell),0);r1=Math.min(Math.floor((y+BR)/cell),rows-1)}
+  else{c0=Math.floor(Math.floor(x/cell)/BS)*BS;r0=Math.floor(Math.floor(y/cell)/BS)*BS;c1=Math.min(c0+BS-1,cols-1);r1=Math.min(r0+BS-1,rows-1)}
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    if(shape){const dx=(c+.5)*cell-x,dy=(r+.5)*cell-y;if(dx*dx+dy*dy>BR*BR)continue}
+    f(r*cols+c);
+  }
+  return[c0*cell,r0*cell,(c1+1)*cell,(r1+1)*cell];
+}
+function apply(x,y){
+  const i=cellAt(x,y);if(i<0)return;
+  if(tool==='steel'||tool==='stone')area(x,y,q=>{if(!S[q]||(inside&&S[q]!==mat)){S[q]=mat;T[q]=AIR}});
+  else if(tool==='erase'){
+    const b=area(x,y,q=>{S[q]=0;T[q]=AIR}),ins=(px,py)=>shape?Math.hypot(px-x,py-y)<=BR:px>=b[0]&&px<b[2]&&py>=b[1]&&py<b[3];
+    for(let k=n-1;k>=0;k--)if(ins(X[k],Y[k]))rem(k);
+    for(let k=srcs.length-1;k>=0;k--)if(ins(srcs[k].x,srcs[k].y))srcs.splice(k,1);
+  }
+  else if(tool==='water'){if(src&&(inside||!S[i])&&!srcs.some(s=>cellAt(s.x,s.y)===i)){S[i]=0;srcs.push({x,y})}}
+  else if(tool==='heat'||tool==='cold'){
+    const d=(tool==='heat'?5:-5)*Math.min(1+(ticks>>2),12),cl=v=>Math.min(1600,Math.max(-200,v+d));
+    PIN.fill(0);
+    circ(x,y,q=>{PIN[q]=1;if(S[q])T[q]=cl(T[q])});
+    for(let k=0;k<n;k++)if(Math.hypot(X[k]-x,Y[k]-y)<=RT)TP[k]=cl(TP[k]);
+  }
+}
+function line(x0,y0,x1,y1){const k=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)/cell));for(let s=1;s<=k;s++)apply(x0+(x1-x0)*s/k,y0+(y1-y0)*s/k)}
+/* В режиме «Полый» новые частицы создаются и внутри твёрдого материала, вырезая в нём клетки */
+function spawn(){
+  const c=Math.round(10*FS*FS),rd=9*FS;
+  for(let k=0;k<c;k++){
+    const a=Math.random()*6.283,d=Math.sqrt(Math.random())*rd,x=lx+Math.cos(a)*d,y=ly+Math.sin(a)*d,i=cellAt(x,y);
+    if(i>=0&&(inside||!S[i])){S[i]=0;add(x,y,0,AIR,2)}
+  }
+}
+function pour(){
+  const c=Math.round(6.6*FS*FS),rd=9*FS,t=lm&&lavaT!==null?lavaT:1000;
+  for(let k=0;k<c;k++){
+    const a=Math.random()*6.283,d=Math.sqrt(Math.random())*rd,x=lx+Math.cos(a)*d,y=ly+Math.sin(a)*d,i=cellAt(x,y);
+    if(i>=0&&(inside||!S[i])){S[i]=0;const m=n;add(x,y,4,t,2);if(lgid&&n>m)PG[m]=lgid}
+  }
+}
+function emit(s){
+  const i=cellAt(s.x,s.y);if(i<0||S[i])return;
+  for(let k=0;k<5;k++)add(s.x+(Math.random()-.5)*3,s.y+(Math.random()-.5)*3,0,AIR,2);
+}
+
+/* Окно температуры лавы открывается по нажатию на иконку «Лава». Если задать температуру,
+   каждая новая струя лавы держит её постоянно (оранжевая метка у капли). Максимум — TMAX */
+function shut(){if(lm&&lavaT===null){lm=0;lb.firstChild.classList.add('r')}dlg.classList.remove('s');paused=false;tin.blur()}
+function openDlg(){tin.value=lavaT===null?1000:lavaT;dlg.classList.add('s');paused=true;tin.focus();tin.select()}
+document.getElementById('ok').onclick=()=>{const v=parseFloat(tin.value);if(isFinite(v))lavaT=Math.min(TMAX,Math.max(-273,v));shut()};
+document.getElementById('no').onclick=shut;
+tin.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('ok').click()});
+
+function onori(e){
+  if(typeof e.beta!=='number'||typeof e.gamma!=='number')return;
+  const bt=e.beta*Math.PI/180,gm=e.gamma*Math.PI/180,sx=Math.cos(bt)*Math.sin(gm),sy=Math.sin(bt),an_=((screen.orientation&&screen.orientation.angle)||window.orientation||0)*Math.PI/180;
+  gtx=sx*Math.cos(an_)+sy*Math.sin(an_);gty=-sx*Math.sin(an_)+sy*Math.cos(an_);
+}
+function gyroOn(b){
+  const go=()=>{window.addEventListener('deviceorientation',onori);gon=1;b.classList.add('on');zg=0;zb.classList.remove('on')},DM=window.DeviceMotionEvent,DO=window.DeviceOrientationEvent,Q=DM&&typeof DM.requestPermission==='function'?DM:DO&&typeof DO.requestPermission==='function'?DO:null;
+  if(!window.isSecureContext){alert('Гироскоп работает только на странице с HTTPS');return}
+  if(!DO){alert('Этот браузер не поддерживает гироскоп');return}
+  if(Q)Q.requestPermission().then(r=>{if(r==='granted')go();else alert('Доступ к гироскопу не разрешён')}).catch(()=>alert('Не удалось запросить доступ к гироскопу'));
+  else go();
+}
+function gyroOff(b){window.removeEventListener('deviceorientation',onori);gon=0;gtx=0;gty=1;b.classList.remove('on')}
+
+/* Сохранения: 5 ячеек в localStorage (если недоступен — в памяти страницы) */
+const SL=5,mem={};
+const e64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+const d64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+function store(k,v){try{localStorage.setItem(k,v);delete mem[k]}catch(e){mem[k]=v}}
+function fetchS(k){if(mem[k]!=null)return mem[k];try{return localStorage.getItem(k)}catch(e){return null}}
+function snap(){
+  if(real)freezeAll();
+  const t16=new Int16Array(S.length);for(let i=0;i<t16.length;i++)t16[i]=Math.max(-32768,Math.min(32767,Math.round(T[i])));
+  const buf=new ArrayBuffer(n*17),f=new Float32Array(buf,0,n*3),hh=new Uint16Array(buf,n*12,n),u8=new Uint8Array(buf,n*14,n*3);
+  for(let i=0;i<n;i++){f[i]=X[i];f[n+i]=Y[i];f[2*n+i]=TP[i];hh[i]=HT[i];u8[i]=K[i];u8[n+i]=PG[i];u8[2*n+i]=Math.round((SZ[i]-1)*200)}
+  return JSON.stringify({c:cols,r:rows,n:n,s:e64(S),t:e64(new Uint8Array(t16.buffer)),p:e64(new Uint8Array(buf)),src:srcs.map(s=>[s.x,s.y]),pt:Array.from(PT)});
+}
+/* Загрузка с анимацией: старый уровень растворяется волной от центра, позже по следу идёт волна постройки нового.
+   Фронт — ступенчатый «майнкрафтовский» круг: у каждого блока BK×BK клеток целочисленный номер кольца.
+   Новые блоки светлее всего у фронта; дальше три стадии яркости (SG мс каждая) постепенно гаснут до обычного цвета. */
+const LV=[.6,.35,.16,0];
+function lite(a){const t=a/SG;if(t>=3)return 0;const i=t|0,f=t-i,u=f<.7?0:(f-.7)/.3;return LV[i]+(LV[i+1]-LV[i])*u*u*(3-2*u)}
+function ringOf(x,y,cxb,cyb){const B=cell*BK;return Math.round(Math.hypot(Math.floor(x/B)+.5-cxb,Math.floor(y/B)+.5-cyb))}
+function addP(p){if(n>=MAX)return;X[n]=PX[n]=p.x;Y[n]=PY[n]=p.y;VX[n]=VY[n]=0;TP[n]=p.t;HT[n]=p.h;K[n]=p.k;PG[n]=p.g;SZ[n]=p.s;NF[n]=1;n++}
+function startLoad(js){
+  const o=JSON.parse(js),sv=d64(o.s),t16=new Int16Array(d64(o.t).buffer),N=cols*rows,NS=new Uint8Array(N),NT=new Float32Array(N).fill(AIR);
+  for(let r=0;r<Math.min(rows,o.r);r++)for(let c=0;c<Math.min(cols,o.c);c++){NS[r*cols+c]=sv[r*o.c+c];NT[r*cols+c]=t16[r*o.c+c]}
+  const m=o.n,buf=d64(o.p).buffer,f=new Float32Array(buf,0,m*3),hh=new Uint16Array(buf,m*12,m),u8=new Uint8Array(buf,m*14,m*3),cxb=Math.ceil(cols/BK)/2,cyb=Math.ceil(rows/BK)/2,pl=[];
+  for(let i=0;i<m;i++){
+    const x=f[i],y=f[m+i];if(x>W||y>Hh)continue;
+    pl.push({x,y,t:f[2*m+i],h:hh[i],k:u8[i],g:u8[m+i],s:1+u8[2*m+i]/200,d:ringOf(x,y,cxb,cyb)});
+  }
+  pl.sort((a,b)=>a.d-b.d);
+  DST=new Float32Array(N);let mx=0;
+  for(let q=0;q<N;q++){const d=ringOf((q%cols+.5)*cell,((q/cols|0)+.5)*cell,cxb,cyb);DST[q]=d;if(d>mx)mx=d}
+  ORD=Uint32Array.from({length:N},(_,i)=>i);ORD.sort((a,b)=>DST[a]-DST[b]);
+  AT=new Float64Array(N);
+  PT.set(o.pt);PIN.fill(0);dropBodies();ptr=0;
+  an={t0:performance.now(),NS,NT,pl,pi:0,pc:0,pb:0,cxb,cyb,mx,rc:-1,r1:0,r2:0,srcs:o.src.map(a=>({x:a[0],y:a[1]})).filter(s=>s.x<W&&s.y<Hh)};
+  closeSv();
+}
+function animStep(now){
+  const e=now-an.t0,sp=(an.mx+BANDR)/DUR,r1=Math.min(an.mx+BANDR,e*sp),rc=r1-BANDR,r2=Math.min(rc,Math.max(0,(e-DEL)*sp)),N=ORD.length;
+  while(an.pc<N&&DST[ORD[an.pc]]<=rc){const q=ORD[an.pc++];S[q]=0;T[q]=AIR;AT[q]=0}
+  for(let i=n-1;i>=0;i--)if(!NF[i]&&ringOf(X[i],Y[i],an.cxb,an.cyb)<=rc)rem(i);
+  while(an.pb<N&&DST[ORD[an.pb]]<=r2){const q=ORD[an.pb++];if(an.NS[q]){S[q]=an.NS[q];T[q]=an.NT[q];AT[q]=now}}
+  while(an.pi<an.pl.length&&an.pl[an.pi].d<=r2)addP(an.pl[an.pi++]);
+  an.rc=rc;an.r1=r1;an.r2=r2;
+  if(e>=DEL+DUR+30){
+    while(an.pi<an.pl.length)addP(an.pl[an.pi++]);
+    srcs=an.srcs;wc=0;
+    for(let i=0;i<n;i++){NF[i]=0;if(!K[i]||K[i]===3)wc++}
+    fxEnd=now+3*SG+60;an=null;
+  }
+}
+function rend(){
+  svb.innerHTML='';
+  for(let i=0;i<SL;i++){
+    const mt=fetchS('whm'+i);
+    if(!mt){svb.insertAdjacentHTML('beforeend',`<button class="slot" data-a="w" data-i="${i}">Слот ${i+1}<small>Пусто · нажмите, чтобы сохранить</small></button>`)}
+    else{
+      const d=new Date(+mt).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      svb.insertAdjacentHTML('beforeend',`<div class="row"><div class="nm">Слот ${i+1}<small>${d}</small></div><button data-a="w" data-i="${i}">Перезаписать</button><button data-a="l" data-i="${i}">Загрузить</button></div>`);
+    }
+  }
+}
+function openSv(){rend();svEl.classList.add('s');paused=true}
+function closeSv(){svEl.classList.remove('s');paused=false}
+svEl.addEventListener('click',e=>{
+  if(e.target===svEl){closeSv();return}
+  const b=e.target.closest('button');if(!b)return;
+  const i=+b.dataset.i;
+  if(b.dataset.a==='w'){try{store('whs'+i,snap());store('whm'+i,String(Date.now()))}catch(err){console.error(err);alert('Не удалось сохранить')}rend()}
+  else if(b.dataset.a==='l'){
+    const js=fetchS('whs'+i);
+    if(js){try{startLoad(js)}catch(err){console.error(err);an=null;alert('Не удалось загрузить сохранение')}}
+  }
+});
+
+const pos=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+const drawTool=()=>tool==='steel'||tool==='stone'||tool==='erase';
+cv.addEventListener('pointerdown',e=>{
+  if(an)return;
+  cv.setPointerCapture(e.pointerId);[lx,ly]=pos(e);cx0=e.clientX;cy0=e.clientY;ptr=1;hold=0;ticks=0;hx=lx;hy=ly;
+  lgid=0;if(tool==='lava'&&lm&&lavaT!==null){lgid=pgc=pgc%254+1;PT[lgid]=lavaT}
+  if(tool==='therm')thm={x:lx,y:ly};if(tool==='gcen')gcT=0;
+  apply(lx,ly);
+});
+cv.addEventListener('pointermove',e=>{
+  const[x,y]=pos(e);cx0=e.clientX;cy0=e.clientY;
+  if(ptr){
+    if(drawTool())line(lx,ly,x,y);
+    else if((tool==='heat'||tool==='cold')&&Math.hypot(x-hx,y-hy)>=cell*3){ticks=0;hold=0;hx=x;hy=y;apply(x,y)}
+    else if(tool==='therm')thm={x,y};
+  }
+  lx=x;ly=y;
+});
+const up=()=>{ptr=0;PIN.fill(0)};
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,up));
+
+dock.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||an)return;
+  if(b.dataset.a==='fill'){S.fill(mat);T.fill(AIR);dropBodies()}
+  else if(b.dataset.a==='clear'){S.fill(0);T.fill(AIR);n=0;wc=0;srcs.length=0;dropBodies()}
+  else if(b.dataset.a==='shape'){shape^=1;b.firstChild.classList.toggle('r',!!shape);b.lastChild.textContent=shape?'Круг':'Блок'}
+  else if(b.dataset.a==='size'){
+    lvl=(lvl+1)%5;BR=[3,4.5,6,7.5,9][lvl];BS=[2,3,4,5,6][lvl];FS=[1/3,.5,2/3,5/6,1][lvl];
+    const s=[6,9,12,15,18][lvl],ic=b.firstChild;ic.style.width=ic.style.height=s+'px';ic.style.margin=(14-s)/2+'px 0';
+  }
+  else if(b.dataset.a==='gyro'){if(gon)gyroOff(b);else gyroOn(b)}
+  else if(b.dataset.a==='zg'){zg^=1;b.classList.toggle('on',!!zg);if(zg&&gon)gyroOff(gb)}
+  else if(b.dataset.a==='real'){real^=1;b.classList.toggle('on',!!real);b.lastChild.textContent=real?'Реальная':'Обычная';if(!real)freezeAll()}
+  else if(b.dataset.a==='save')openSv();
+  else if(b.dataset.m){inside=+b.dataset.m;dock.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b))}
+  else{
+    if(b.dataset.t==='water'&&tool==='water'){src^=1;b.firstChild.classList.toggle('r',!src)}
+    if(b.dataset.t==='lava'&&tool==='lava'){lm^=1;b.firstChild.classList.toggle('r',!lm);if(lm)openDlg()}
+    if(b.dataset.t==='therm'&&tool==='therm')thm=null;
+    tool=b.dataset.t;if(tool==='steel')mat=1;if(tool==='stone')mat=2;
+    dock.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));
+  }
+});
+
+const PUFF=document.createElement('canvas');PUFF.width=PUFF.height=32;
+{const g=PUFF.getContext('2d'),q=g.createRadialGradient(16,16,0,16,16,16);q.addColorStop(0,'rgba(196,207,224,1)');q.addColorStop(1,'rgba(196,207,224,0)');g.fillStyle=q;g.fillRect(0,0,32,32)}
+
+function draw(){
+  if(!W)return;
+  const now=performance.now();
+  if(fr%60===1)theme();
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,Hh);
+  for(let i=0;i<u32.length;i++){
+    const m=S[i];if(!m){u32[i]=0;continue}
+    let t=T[i]|0;t=t<-200?-200:t>1600?1600:t;u32[i]=LUT[m][t+200];
+  }
+  /* анимация загрузки: растворение старых блоков волной и подсветка только что построенных */
+  if(an||now<fxEnd){
+    const rc=an?an.rc:0,r1=an?an.r1:0;
+    for(let i=0;i<u32.length;i++){
+      if(!S[i])continue;
+      const a=AT[i],f=a?lite(now-a):0,d=an?DST[i]:0,fade=an&&d>rc&&d<=r1;
+      if(f<=0&&!fade)continue;
+      const c=u32[i];let r=c&255,g=(c>>8)&255,b=(c>>16)&255,al=255;
+      if(f>0){const k=f;r+=(255-r)*k;g+=(255-g)*k;b+=(255-b)*k}
+      if(fade)al=255*(d-rc)/BANDR;
+      u32[i]=((al<<24)|((b|0)<<16)|((g|0)<<8)|(r|0))>>>0;
+    }
+  }
+  octx.putImageData(img,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(off,0,0,W,Hh);
+  const pa=new Path2D();
+  for(let i=0;i<n;i++){
+    if(K[i])continue;
+    const r=R*SZ[i];
+    pa.moveTo(X[i]+r,Y[i]);pa.arc(X[i],Y[i],r,0,6.2832);
+  }
+  ctx.fillStyle='rgb(47,140,255)';ctx.fill(pa);
+  /* пар: клубы заметно крупнее самих частиц, чтобы выглядел как облачко */
+  ctx.globalAlpha=.1;const SR=R*2.5;
+  for(let i=0;i<n;i++)if(K[i]===3)for(let k=0;k<3;k++){
+    const a=i*2.4+k*2.094+fr*.012,d=SR*(.3+.3*k),s=SR*(.8+.4*k);
+    ctx.drawImage(PUFF,X[i]+Math.cos(a)*d-s,Y[i]+Math.sin(a)*d-s,s*2,s*2);
+  }
+  ctx.globalAlpha=1;
+  GN.fill(0);GX.fill(0);GY.fill(0);
+  for(let i=0;i<n;i++){
+    const k=K[i];if(!k||k===3)continue;
+    ctx.fillStyle=rgb(hotc(BASE,uu(TP[i],MK[k])));ctx.beginPath();ctx.arc(X[i],Y[i],R*1.25,0,6.2832);ctx.fill();
+    if(k===4&&PG[i]){const q=PG[i];GN[q]++;GX[q]+=X[i];GY[q]+=Y[i]}
+  }
+  ctx.fillStyle='rgb(47,140,255)';ctx.strokeStyle='rgb(150,205,255)';ctx.lineWidth=1.5;
+  for(const s of srcs){ctx.beginPath();ctx.roundRect(s.x-3,s.y-3,6,6,1.5);ctx.fill();ctx.stroke()}
+  ctx.fillStyle='rgb(255,106,43)';ctx.strokeStyle='rgb(255,236,200)';ctx.lineWidth=1.2;
+  for(let q=1;q<256;q++)if(GN[q]){ctx.beginPath();ctx.roundRect(GX[q]/GN[q]-4.5,GY[q]/GN[q]-4.5,9,9,2);ctx.fill();ctx.stroke()}
+  /* всплывающая температура над местом удержания (нагрев/холод) */
+  const gc=ptr&&tool==='gcen',show=ptr&&(tool==='heat'||tool==='cold'||gc);
+  if(show){
+    const rs=gc?null:probe(lx,ly,RT);
+    tv.textContent=gc?(3+.25*gcT).toFixed(2)+' м · ×'+(1+.25*gcT).toFixed(2):Math.round(rs[0])+' °C';
+    tip.style.setProperty('--tc',gc?'#8a6cff':rs[1]);
+    const x=Math.min(Math.max(cx0,50),innerWidth-50),y=Math.max(cy0-52,40);
+    tip.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;
+  }
+  tip.style.opacity=show?1:0;
+  if(gc){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.5)';ctx.beginPath();ctx.arc(lx,ly,(3+.25*gcT)*MPX,0,6.2832);ctx.stroke();ctx.fillStyle='rgba(138,108,255,.95)';ctx.beginPath();ctx.arc(lx,ly,3,0,6.2832);ctx.fill()}
+  /* термометр: метка остаётся на поле, пока его не скроют повторным нажатием на инструмент */
+  if(thm){
+    const bb=cv.getBoundingClientRect(),rs=probe(thm.x,thm.y,16),x=Math.min(Math.max(bb.left+thm.x,50),innerWidth-50),y=Math.max(bb.top+thm.y-14,40);
+    ctx.beginPath();ctx.arc(thm.x,thm.y,3.5,0,6.2832);ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.45)';ctx.stroke();ctx.lineWidth=1.5;ctx.strokeStyle='#fff';ctx.stroke();
+    tv2.textContent=Math.round(rs[0])+' °C';
+    tip2.style.setProperty('--tc',rs[1]);
+    tip2.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;
+  }
+  tip2.style.opacity=thm?1:0;
+  hud.textContent=fps+' FPS · '+n+' частиц';
+}
+
+let last=0,acc=0;
+function loop(t){
+  try{
+    acc+=Math.min(t-last,50);last=t;
+    fcnt++;if(t-ft>=500){fps=Math.round(fcnt*1000/(t-ft));fcnt=0;ft=t}
+    if(W){
+      if(an)animStep(performance.now());
+      if(paused||an)acc=0;
+      while(acc>=16.67){
+        acc-=16.67;
+        if(ptr){
+          if(tool==='water'){if(!src)spawn()}
+          else if(tool==='lava')pour();
+          else if(tool==='heat'||tool==='cold'){if(++hold>=8){hold=0;ticks++;apply(lx,ly)}}
+          else if(tool==='gcen')gcT+=1/60;
+        }
+        for(let k=0;k<srcs.length;k++)emit(srcs[k]);
+        stepFrame();
+      }
+      draw();
+    }
+  }catch(err){console.error(err)}
+  requestAnimationFrame(loop);
+}
+
+let first=true;
+new ResizeObserver(()=>{setup();if(first&&W){first=false;seed()}}).observe(stage);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

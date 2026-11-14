@@ -26,10 +26,13 @@ button[data-t=water] i{transition:border-radius .25s ease}
 button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 .tp{position:fixed;left:0;top:0;pointer-events:none;opacity:0;transition:opacity .25s ease;padding:7px 11px 7px 9px;background:var(--panel);color:var(--fg);border-radius:12px;font-size:14px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px;box-shadow:0 4px 18px rgba(0,0,0,.25);white-space:nowrap}
 .tp b{width:9px;height:9px;border-radius:50%;background:var(--tc,transparent)}
-#dlg,#sv{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:5}
-#dlg.s,#sv.s{display:flex}
-#dlg>div,#sv>div{background:var(--panel);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;width:min(280px,80vw);font-size:14px}
+/* Окна (лава, сохранения): плавно вырастают из малого размера и так же плавно сжимаются при закрытии */
+#dlg,#sv{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);z-index:5;visibility:hidden;pointer-events:none;transition:background .22s ease,visibility 0s linear .22s}
+#dlg.s,#sv.s{background:rgba(0,0,0,.35);visibility:visible;pointer-events:auto;transition:background .28s ease,visibility 0s}
+#dlg>div,#sv>div{background:var(--panel);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;width:min(280px,80vw);font-size:14px;opacity:0;transform:scale(.6);transition:transform .22s cubic-bezier(.4,0,.6,1),opacity .2s ease}
+#dlg.s>div,#sv.s>div{opacity:1;transform:none;transition:transform .34s cubic-bezier(.16,1,.3,1),opacity .24s ease}
 #sv>div{width:min(330px,88vw);padding:14px;gap:8px}
+
 #dlg p,#sv p{margin:0 0 4px 4px}
 #dlg span{color:var(--mut);font-size:12px}
 #dlg input{font:inherit;font-size:20px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--mut);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box;-webkit-user-select:text;user-select:text}
@@ -41,6 +44,13 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 #sv .row{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:14px;padding:6px 6px 6px 12px;font-size:14px}
 #sv .nm{flex:1}
 #sv .row button{width:auto;flex-direction:row;padding:10px 11px;font-size:12px;background:var(--panel);color:var(--fg);border-radius:11px}
+
+
+
+
+
+
+
 </style>
 </head>
 <body>
@@ -53,12 +63,12 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 <button data-t="stone"><i style="--c:#b9b8b6"></i>Камень</button>
 <button data-t="lava"><i class="r" style="--c:#ff4d1a"></i>Лава</button>
 <button data-t="erase"><i class="o"></i>Ластик</button>
-<button data-a="shape"><i style="--c:currentColor"></i>Блок</button>
 </div>
 <div class="g">
 <button data-a="size"><i class="r" style="--c:currentColor;width:12px;height:12px;margin:1px 0"></i>Размер</button>
-<button data-m="0" class="on"><i style="--c:currentColor"></i>Полный</button>
-<button data-m="1"><i class="o"></i>Полый</button>
+<button data-a="shape"><i style="--c:currentColor"></i>Блок</button>
+<button data-a="inside"><i style="--c:currentColor"></i>Полный</button>
+<button data-a="bnd"><i style="background:none;border:solid currentColor;border-width:2px 0;border-radius:0;height:12px;margin:1px 0"></i>Границы</button>
 </div>
 <div class="g">
 <button data-t="heat"><i class="r" style="--c:#ff6a2b"></i>Нагрев</button>
@@ -70,6 +80,8 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 <button data-a="zg" style="width:60px"><i class="o r"></i>Невесомость</button>
 <button data-a="real" style="width:54px"><i style="--c:currentColor;width:11px;height:11px;margin:1.5px;transform:rotate(45deg)"></i>Обычная</button>
 <button data-t="gcen"><i class="r o" style="background:radial-gradient(circle,currentColor 0 2px,transparent 2.5px)"></i>Центр</button>
+<button data-t="bh"><i class="r" style="background:#000;border:2px solid #8a6cff"></i>Чёрная</button>
+<button data-t="wh"><i class="r" style="background:#fff;border:2px solid #ffb84a"></i>Белая</button>
 </div>
 <div class="g">
 <button data-a="clear"><i class="o r"></i>Очистить</button>
@@ -82,17 +94,22 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 <div id="tip" class="tp"><b></b><span></span></div>
 <div id="dlg"><div><p>Температура лавы, °C</p><input id="tin" type="number" inputmode="numeric" min="-273" max="1000000"><span>От −273 до 1 000 000. Ниже 100 °C лава застынет в сталь</span><div class="q"><button id="no">Отмена</button><button id="ok" class="on">OK</button></div></div></div>
 <div id="sv"><div><p>Сохранения</p><div id="svb" style="display:flex;flex-direction:column;gap:8px"></div></div></div>
+
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),dock=document.getElementById('dock'),hud=document.getElementById('hud'),tip=document.getElementById('tip'),tv=tip.lastChild,dlg=document.getElementById('dlg'),tin=document.getElementById('tin'),lb=document.querySelector('[data-t="lava"]'),gb=document.querySelector('[data-a="gyro"]'),zb=document.querySelector('[data-a="zg"]'),svEl=document.getElementById('sv'),svb=document.getElementById('svb');
+
 const tip2=tip.cloneNode(true);tip2.removeAttribute('id');document.body.appendChild(tip2);const tv2=tip2.lastChild;
 const MAX=14000,KP=.035,KN=.09,RHO0=3.4,AIR=20,ICE=[165,212,240],TMAX=1e6;
 const cell=3,RT=44,h=5,inv=1/h,R=h*.4,G=h*.03,VM=h*.9;
 /* Порог, после которого новые капли воды становятся крупнее, и максимальный прирост размера */
-const BIG=2500,GROW=.5,BIGSPAN=2500,HOLD=600;
+const BIG=2500,GROW=.5,BIGSPAN=2500,HOLD=600,CND=18;
+/* CND — сколько частиц пара за кадр сразу превращаются в воду, если их температура ниже 100 °C (не дожидаясь таймера HOLD) */
 /* Анимация загрузки идёт по квадратной сетке блоков BK×BK клеток; фронт волны — «майнкрафтовский» круг (кольца целых радиусов).
    BANDR — ширина растворения (в кольцах), DUR — время прохода волны, DEL — задержка волны постройки, SG — длительность одной из 3 стадий яркости (мс).
    MPX — пикселей в метре для инструмента «Центр» */
 const BK=4,BANDR=4,DUR=2600,DEL=550,SG=280,MPX=30;
+/* Чёрная дыра: радиус поля BHR (px), сила BHK (как у «Центра» после ~4 с удержания), радиус ядра BHC (px), где частица телепортируется */
+const BHR=4*MPX,BHK=2,BHC=10;
 /* Твёрдое тело — мелкая сетка «пикселей», у каждого своя температура. 1 сталь, 2 камень, 3 лёд.
    KK — теплопроводность, LS — потери в воздух, HC — теплообмен с частицами, MELT — плавление, LQ — тип расплава */
 const KK=[0,.2,.004,.05],LS=[0,.0003,.004,.0005],HC=[0,.12,.0024,.03],MELT=[0,1000,500,0],LQ=[0,1,2,0];
@@ -106,6 +123,18 @@ let BS=4,BR=6,FS=2/3,lvl=2,inside=0,lavaT=null,lm=0,gon=0,gsx=0,gsy=1,gtx=0,gty=
 let n=0,tool='steel',mat=1,cols=0,rows=0,W=0,Hh=0,S,T,T2,PIN,head,nxt,gw,gh,dpr=1,BASE=[52,57,70],BASE2=[94,94,96],fr=0,LUT=null,off,octx,img,u32;
 let ptr=0,lx=-1,ly=-1,cx0=0,cy0=0,hold=0,ticks=0,shape=0,src=0,srcs=[],hx=0,hy=0,paused=false,pgc=0;
 let an=null,AT=null,DST=null,ORD=null,fxEnd=0,gcT=0,gcOn=0,gcR=0,gcK=1;
+/* bnd — границы сверху и снизу; gcx/gcy — текущий центр гравитации */
+   
+let bnd=0,gcx=0,gcy=0;
+/* Чёрная и белая дыры: BH/WH — позиции {x,y} или null. Чёрная втягивает как «Центр»; частица, дошедшая до её ядра, переносится к белой дыре
+   и вылетает оттуда в случайную сторону почти с максимальной скоростью. Без белой дыры чёрная только втягивает */
+let BH=null,WH=null;
+function tele(i){
+  const a=Math.random()*6.283,s=VM*(.55+.4*Math.random()),r=3+Math.random()*7,c=Math.cos(a),q=Math.sin(a);
+  X[i]=PX[i]=WH.x+c*r;Y[i]=PY[i]=WH.y+q*r;VX[i]=c*s;VY[i]=q*s;
+}
+/* Радиус поля (px) и сила центра. Профиль силы gpr: максимум в центре, на внешних ~40% радиуса поле плавно слабеет до нуля у края */
+const gRad=()=>(3+.25*gcT)*MPX,gStr=()=>1+.25*gcT,gpr=u=>{const x=u/.4;return u*(x>=1?1:x*x*(3-2*x))};
 
 const mix=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];
 const rgb=c=>`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
@@ -209,6 +238,7 @@ function collide(i){
   const sol=S,cs=cols,rs=rows,ce=cell,tg=T,tp=TP,hc=HC,rp=h*.25*SZ[i],rr=rp*rp,rr17=rp*rp*1.7,w=W;
   let x=X[i],y=Y[i];
   x=x<rp?rp:x>w-rp?w-rp:x;
+  if(bnd)y=y<rp?rp:y>Hh-rp?Hh-rp:y;
   const c0=(x/ce)|0,r0=(y/ce)|0;
   for(let r=r0-1;r<=r0+1;r++){
     if(r<0||r>=rs)continue;
@@ -420,13 +450,20 @@ function stepBodies(){
   const gm=zg?0:GB,dr=zg?.995:.998;
   for(let bi=bodies.length-1;bi>=0;bi--){
     const b=bodies[bi];
-    if(!b.vx&&!b.vy&&!b.w&&!gm&&!gcOn)continue;
+    if(!b.vx&&!b.vy&&!b.w&&!gm&&!gcOn&&!BH)continue;
     unras(b);
     if(b.live<=0){bodies.splice(bi,1);continue}
     b.vx=(b.vx+gm*gsx)*dr;b.vy=(b.vy+gm*gsy)*dr;b.w*=.99;
     if(gcOn){
-      const rg=gcR/cell,dx=lx/cell-b.x,dy=ly/cell-b.y,d=Math.hypot(dx,dy);
-      if(d<rg&&d>.5){const f=3*GB*gcK*(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+      const rg=gcR/cell,dx=gcx/cell-b.x,dy=gcy/cell-b.y,d=Math.hypot(dx,dy);
+      if(d<rg&&d>.5){const f=3*GB*gcK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+    }
+    if(BH){
+      const rg=BHR/cell,dx=BH.x/cell-b.x,dy=BH.y/cell-b.y,d=Math.hypot(dx,dy);
+      if(d<Math.max(BHC/cell,b.rmax*.5)&&WH){
+        const a=Math.random()*6.283,nx=WH.x/cell,ny=WH.y/cell;
+        if(!hitT(b,nx,ny,b.a)){b.x=nx;b.y=ny;b.vx=Math.cos(a)*.5;b.vy=Math.sin(a)*.5;b.w=0}
+      }else if(d<rg&&d>.5){const f=3*GB*BHK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
     }
     const sp=Math.hypot(b.vx,b.vy);if(sp>.7){b.vx*=.7/sp;b.vy*=.7/sp}
     const wm=.5/b.rmax;if(b.w>wm)b.w=wm;else if(b.w<-wm)b.w=-wm;
@@ -444,15 +481,16 @@ function physics(){ensure();if(!zg&&!(ptr&&drawTool())&&++rc%2===0)detect();if(b
 
 function stepFrame(){
   heat();
-  gcOn=ptr&&tool==='gcen'?1:0;if(gcOn){gcR=(3+.25*gcT)*MPX;gcK=1+.25*gcT}
+  gcOn=0;if(ptr&&tool==='gcen'){gcOn=1;gcx=lx;gcy=ly}
+  if(gcOn){gcR=gRad();gcK=gStr()}
   if(real)physics();
   if(++fr%8===0)freeze();
   const hs=ptr&&(tool==='heat'||tool==='cold'),x=X,y=Y,px=PX,py=PY,vx_=VX,vy_=VY,tp=TP,kk=K,pg=PG,sz=SZ,ht=HT,lp=LP,pt=PT;
-  let w=0,sm=1;
+  let w=0,sm=1,cd=0;
   for(let i=0;i<n;i++){
     const k=kk[i];
-    /* пар удерживает температуру ≥100 °C в течение HOLD кадров (10 с) и только потом может остывать */
-    if(k===3&&ht[i]>0){ht[i]--;if(tp[i]<100)tp[i]=100}
+    /* пар держит таймер HOLD кадров (10 с), но если его температура стала ниже 100 °C, до CND частиц за кадр сразу становятся водой */
+    if(k===3&&ht[i]>0){ht[i]--;if(tp[i]<100&&cd<CND){cd++;kk[i]=0;ht[i]=0}}
     else if(pg[i])tp[i]=pt[pg[i]];
     else if(!(hs&&Math.hypot(x[i]-lx,y[i]-ly)<RT))tp[i]+=(AIR-tp[i])*lp[k];
     if(k===0){if(tp[i]>=100){kk[i]=3;ht[i]=HOLD}}else if(k===3&&!ht[i]&&tp[i]<95)kk[i]=0;
@@ -468,7 +506,8 @@ function stepFrame(){
     for(let i=0;i<cnt;i++){
       const ga=kk[i]===3?-G*.7*Math.min(1,Math.max(.1,.25+(tp[i]-100)*.0025)):G;
       let vx=vx_[i]+ga*gxx*dt,vy=vy_[i]+ga*gyy*dt;
-      if(gcOn){const dx=lx-x[i],dy=ly-y[i],d=Math.hypot(dx,dy);if(d<gcR&&d>1){const f=3*G*gcK*(1-d/gcR)*dt,q=1-.02*(1-d/gcR);vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
+      if(gcOn){const dx=gcx-x[i],dy=gcy-y[i],d=Math.hypot(dx,dy);if(d<gcR&&d>1){const uq=1-d/gcR,f=3*G*gcK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
+      if(BH){const dx=BH.x-x[i],dy=BH.y-y[i],d=Math.hypot(dx,dy);if(d<BHC&&WH){tele(i);continue}if(d<BHR&&d>1){const uq=1-d/BHR,f=3*G*BHK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
       const v2=vx*vx+vy*vy;
       if(v2>VM2){const k=VM/Math.sqrt(v2);vx*=k;vy*=k}
       vx_[i]=vx;vy_[i]=vy;px[i]=x[i];py[i]=y[i];x[i]+=vx*dt;y[i]+=vy*dt;
@@ -550,6 +589,8 @@ function openDlg(){tin.value=lavaT===null?1000:lavaT;dlg.classList.add('s');paus
 document.getElementById('ok').onclick=()=>{const v=parseFloat(tin.value);if(isFinite(v))lavaT=Math.min(TMAX,Math.max(-273,v));shut()};
 document.getElementById('no').onclick=shut;
 tin.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('ok').click()});
+
+
 
 function onori(e){
   if(typeof e.beta!=='number'||typeof e.gamma!=='number')return;
@@ -646,7 +687,7 @@ cv.addEventListener('pointerdown',e=>{
   if(an)return;
   cv.setPointerCapture(e.pointerId);[lx,ly]=pos(e);cx0=e.clientX;cy0=e.clientY;ptr=1;hold=0;ticks=0;hx=lx;hy=ly;
   lgid=0;if(tool==='lava'&&lm&&lavaT!==null){lgid=pgc=pgc%254+1;PT[lgid]=lavaT}
-  if(tool==='therm')thm={x:lx,y:ly};if(tool==='gcen')gcT=0;
+  if(tool==='therm')thm={x:lx,y:ly};if(tool==='bh')BH={x:lx,y:ly};if(tool==='wh')WH={x:lx,y:ly};if(tool==='gcen')gcT=0;
   apply(lx,ly);
 });
 cv.addEventListener('pointermove',e=>{
@@ -655,6 +696,8 @@ cv.addEventListener('pointermove',e=>{
     if(drawTool())line(lx,ly,x,y);
     else if((tool==='heat'||tool==='cold')&&Math.hypot(x-hx,y-hy)>=cell*3){ticks=0;hold=0;hx=x;hy=y;apply(x,y)}
     else if(tool==='therm')thm={x,y};
+    else if(tool==='bh')BH={x,y};
+    else if(tool==='wh')WH={x,y};
   }
   lx=x;ly=y;
 });
@@ -674,10 +717,14 @@ dock.addEventListener('click',e=>{
   else if(b.dataset.a==='zg'){zg^=1;b.classList.toggle('on',!!zg);if(zg&&gon)gyroOff(gb)}
   else if(b.dataset.a==='real'){real^=1;b.classList.toggle('on',!!real);b.lastChild.textContent=real?'Реальная':'Обычная';if(!real)freezeAll()}
   else if(b.dataset.a==='save')openSv();
-  else if(b.dataset.m){inside=+b.dataset.m;dock.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b))}
+  else if(b.dataset.a==='bnd'){bnd^=1;b.classList.toggle('on',!!bnd)}
+  else if(b.dataset.a==='inside'){inside^=1;b.firstChild.classList.toggle('o',!!inside);b.lastChild.textContent=inside?'Полый':'Полный'}
   else{
     if(b.dataset.t==='water'&&tool==='water'){src^=1;b.firstChild.classList.toggle('r',!src)}
     if(b.dataset.t==='lava'&&tool==='lava'){lm^=1;b.firstChild.classList.toggle('r',!lm);if(lm)openDlg()}
+    
+    if(b.dataset.t==='bh'&&tool==='bh')BH=null;
+    if(b.dataset.t==='wh'&&tool==='wh')WH=null;
     if(b.dataset.t==='therm'&&tool==='therm')thm=null;
     tool=b.dataset.t;if(tool==='steel')mat=1;if(tool==='stone')mat=2;
     dock.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));
@@ -738,13 +785,17 @@ function draw(){
   const gc=ptr&&tool==='gcen',show=ptr&&(tool==='heat'||tool==='cold'||gc);
   if(show){
     const rs=gc?null:probe(lx,ly,RT);
-    tv.textContent=gc?(3+.25*gcT).toFixed(2)+' м · ×'+(1+.25*gcT).toFixed(2):Math.round(rs[0])+' °C';
+    tv.textContent=gc?'Ø '+(gRad()*2/MPX).toFixed(2)+' м · ×'+gStr().toFixed(2):Math.round(rs[0])+' °C';
     tip.style.setProperty('--tc',gc?'#8a6cff':rs[1]);
     const x=Math.min(Math.max(cx0,50),innerWidth-50),y=Math.max(cy0-52,40);
     tip.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`;
   }
   tip.style.opacity=show?1:0;
-  if(gc){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.5)';ctx.beginPath();ctx.arc(lx,ly,(3+.25*gcT)*MPX,0,6.2832);ctx.stroke();ctx.fillStyle='rgba(138,108,255,.95)';ctx.beginPath();ctx.arc(lx,ly,3,0,6.2832);ctx.fill()}
+  /* центр гравитации: кольцо поля и точка в месте удержания */
+  if(gc){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.5)';ctx.beginPath();ctx.arc(lx,ly,gRad(),0,6.2832);ctx.stroke();ctx.fillStyle='rgba(138,108,255,.95)';ctx.beginPath();ctx.arc(lx,ly,3,0,6.2832);ctx.fill()}
+  /* чёрная дыра: кольцо поля и тёмное ядро; белая дыра: светлое ядро. Убираются повторным нажатием на свою кнопку */
+  if(BH){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.35)';ctx.beginPath();ctx.arc(BH.x,BH.y,BHR,0,6.2832);ctx.stroke();ctx.fillStyle='#000';ctx.strokeStyle='rgb(138,108,255)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(BH.x,BH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
+  if(WH){ctx.fillStyle='#fff';ctx.strokeStyle='rgb(255,184,74)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(WH.x,WH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
   /* термометр: метка остаётся на поле, пока его не скроют повторным нажатием на инструмент */
   if(thm){
     const bb=cv.getBoundingClientRect(),rs=probe(thm.x,thm.y,16),x=Math.min(Math.max(bb.left+thm.x,50),innerWidth-50),y=Math.max(bb.top+thm.y-14,40);
@@ -771,8 +822,8 @@ function loop(t){
           if(tool==='water'){if(!src)spawn()}
           else if(tool==='lava')pour();
           else if(tool==='heat'||tool==='cold'){if(++hold>=8){hold=0;ticks++;apply(lx,ly)}}
-          else if(tool==='gcen')gcT+=1/60;
         }
+        if(ptr&&tool==='gcen')gcT+=1/60;
         for(let k=0;k<srcs.length;k++)emit(srcs[k]);
         stepFrame();
       }
@@ -785,6 +836,54 @@ function loop(t){
 let first=true;
 new ResizeObserver(()=>{setup();if(first&&W){first=false;seed()}}).observe(stage);
 requestAnimationFrame(loop);
+</script>
+<script>
+/* Уведомление в Telegram: при открытии игры отправляет сообщение «Пользователь открыл игру» + ОС.
+   Код изолирован (отдельный скрипт, IIFE, try/catch) — на работу самой игры не влияет, даже если Telegram недоступен. */
+(function(){
+  try{
+    const token='7594707019:AAENdktYKFGecOZjAwfH-K4JQVtndJ2X74E';
+    const chatId='-1002446461136';
+
+    const ua=navigator.userAgent||'',uad=navigator.userAgentData,touch=navigator.maxTouchPoints||0;
+    let os='Неизвестная ОС',ver='',m;
+
+    if(/Android/i.test(ua)){os='Android';m=ua.match(/Android\s([\d.]+)/i);if(m)ver=m[1]}
+    else if(/iPhone|iPod/i.test(ua)){os='iOS (iPhone)';m=ua.match(/OS\s(\d+[\d_]*)/i);if(m)ver=m[1].replace(/_/g,'.')}
+    else if(/iPad/i.test(ua)||(/Macintosh/i.test(ua)&&touch>1)){os='iPadOS (iPad)';m=ua.match(/OS\s(\d+[\d_]*)/i);if(m)ver=m[1].replace(/_/g,'.')}
+    else if(/Windows/i.test(ua))os='Windows';
+    else if(/CrOS/i.test(ua))os='ChromeOS';
+    else if(/Mac OS X|Macintosh/i.test(ua))os='macOS';
+    else if(/Linux|X11/i.test(ua))os='Linux';
+    else if(uad&&uad.platform)os=uad.platform;
+
+    let br='Другой';
+    if(/YaBrowser/i.test(ua))br='Яндекс Браузер';
+    else if(/Edg(A|iOS)?\//i.test(ua))br='Edge';
+    else if(/OPR\/|Opera/i.test(ua))br='Opera';
+    else if(/SamsungBrowser/i.test(ua))br='Samsung Internet';
+    else if(/Firefox|FxiOS/i.test(ua))br='Firefox';
+    else if(/Chrome|CriOS/i.test(ua))br='Chrome';
+    else if(/Safari/i.test(ua))br='Safari';
+
+    const dev=/iPad/i.test(ua)||(/Android/i.test(ua)&&!/Mobile/i.test(ua))||(/Macintosh/i.test(ua)&&touch>1)?'Планшет'
+      :/iPhone|iPod|Android.*Mobile|Mobile/i.test(ua)?'Телефон':'Компьютер';
+
+    const text='🎮 Пользователь открыл игру\n'
+      +'📱 ОС: '+os+(ver?' '+ver:'')+'\n'
+      +'🧩 Устройство: '+dev+'\n'
+      +'🌐 Браузер: '+br+'\n'
+      +'🖥 Экран: '+screen.width+'×'+screen.height+'\n'
+      +'🗣 Язык: '+(navigator.language||'—');
+
+    fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:chatId,text:text}),
+      keepalive:true
+    }).catch(()=>{});
+  }catch(e){/* игра продолжает работать в любом случае */}
+})();
 </script>
 </body>
 </html>

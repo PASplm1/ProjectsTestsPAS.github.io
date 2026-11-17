@@ -27,23 +27,32 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 .tp{position:fixed;left:0;top:0;pointer-events:none;opacity:0;transition:opacity .25s ease;padding:7px 11px 7px 9px;background:var(--panel);color:var(--fg);border-radius:12px;font-size:14px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:7px;box-shadow:0 4px 18px rgba(0,0,0,.25);white-space:nowrap}
 .tp b{width:9px;height:9px;border-radius:50%;background:var(--tc,transparent)}
 /* Окна (лава, сохранения): плавно вырастают из малого размера и так же плавно сжимаются при закрытии */
-#dlg,#sv{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);z-index:5;visibility:hidden;pointer-events:none;transition:background .22s ease,visibility 0s linear .22s}
-#dlg.s,#sv.s{background:rgba(0,0,0,.35);visibility:visible;pointer-events:auto;transition:background .28s ease,visibility 0s}
-#dlg>div,#sv>div{background:var(--panel);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;width:min(280px,80vw);font-size:14px;opacity:0;transform:scale(.6);transition:transform .22s cubic-bezier(.4,0,.6,1),opacity .2s ease}
-#dlg.s>div,#sv.s>div{opacity:1;transform:none;transition:transform .34s cubic-bezier(.16,1,.3,1),opacity .24s ease}
+#dlg,#sv,#hm{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);z-index:5;visibility:hidden;pointer-events:none;transition:background .22s ease,visibility 0s linear .22s}
+#dlg.s,#sv.s,#hm.s{background:rgba(0,0,0,.35);visibility:visible;pointer-events:auto;transition:background .28s ease,visibility 0s}
+#dlg>div,#sv>div,#hm>div{background:var(--panel);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px;width:min(280px,80vw);font-size:14px;opacity:0;transform:scale(.6);transition:transform .22s cubic-bezier(.4,0,.6,1),opacity .2s ease}
+#dlg.s>div,#sv.s>div,#hm.s>div{opacity:1;transform:none;transition:transform .34s cubic-bezier(.16,1,.3,1),opacity .24s ease}
 #sv>div{width:min(330px,88vw);padding:14px;gap:8px}
 
-#dlg p,#sv p{margin:0 0 4px 4px}
-#dlg span{color:var(--mut);font-size:12px}
-#dlg input{font:inherit;font-size:20px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--mut);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box;-webkit-user-select:text;user-select:text}
-#dlg .q{display:flex;gap:8px}
-#dlg button{flex:1;width:auto;flex-direction:row;justify-content:center;font-size:14px;padding:12px 0;background:var(--bg)}
-#dlg button.on{background:var(--acc);color:var(--accfg)}
+#dlg p,#sv p,#hm p{margin:0 0 4px 4px}
+#dlg span,#hm span{color:var(--mut);font-size:12px}
+#dlg input,#hm input{font:inherit;font-size:20px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--mut);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#dlg .q,#hm .q{display:flex;gap:8px}
+#dlg button,#hm button{flex:1;width:auto;flex-direction:row;justify-content:center;font-size:14px;padding:12px 0;background:var(--bg)}
+#dlg button.on,#hm button.on{background:var(--acc);color:var(--accfg)}
 #sv small{display:block;font-size:11px;color:var(--mut);margin-top:3px}
 #sv .slot{width:100%;flex-direction:column;align-items:flex-start;gap:0;padding:12px;font-size:14px;background:var(--bg);color:var(--fg);border-radius:14px;text-align:left}
 #sv .row{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:14px;padding:6px 6px 6px 12px;font-size:14px}
 #sv .nm{flex:1}
 #sv .row button{width:auto;flex-direction:row;padding:10px 11px;font-size:12px;background:var(--panel);color:var(--fg);border-radius:11px}
+/* Меню дыр */
+#hm>div{width:min(300px,86vw);gap:10px}
+#hm label,#hm .rw{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 4px}
+#hm label span,#hm .rw span{color:var(--fg);font-size:13px}
+#hm input{width:96px;font-size:16px;padding:8px 10px;text-align:right}
+#hm #hmf{display:flex;flex-direction:column;gap:8px;transition:opacity .15s}
+#hm #hmf.off{opacity:.4;pointer-events:none}
+#hm #hmr{flex:none;width:96px;padding:9px 0}
+#hm small{color:var(--mut);font-size:11px;margin:0 4px}
 
 
 
@@ -57,6 +66,10 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 <div id="hud"></div>
 <div id="stage"><canvas id="c"></canvas></div>
 <div id="dock">
+<div class="g">
+<button data-a="pause"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="3" y="2" width="3" height="10" rx="1"/><rect x="8" y="2" width="3" height="10" rx="1"/></svg>Пауза</button>
+<button data-a="spd" style="width:54px"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><path d="M1.5 2.5 6.5 7 1.5 11.5z"/><path d="M7.5 2.5 12.5 7 7.5 11.5z"/></svg>Время ×2</button>
+</div>
 <div class="g">
 <button data-t="water"><i class="r" style="--c:#2f8cff"></i>Вода</button>
 <button data-t="steel" class="on"><i style="--c:#8a93a6"></i>Сталь</button>
@@ -94,6 +107,19 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 <div id="tip" class="tp"><b></b><span></span></div>
 <div id="dlg"><div><p>Температура лавы, °C</p><input id="tin" type="number" inputmode="numeric" min="-273" max="1000000"><span>От −273 до 1 000 000. Ниже 100 °C лава застынет в сталь</span><div class="q"><button id="no">Отмена</button><button id="ok" class="on">OK</button></div></div></div>
 <div id="sv"><div><p>Сохранения</p><div id="svb" style="display:flex;flex-direction:column;gap:8px"></div></div></div>
+<div id="hm"><div>
+<p id="hmt">Чёрная дыра</p>
+<div class="q"><button data-m="0">Статическая</button><button data-m="1">Настраиваемая</button></div>
+<div id="hmf">
+<label><span>Скорость роста Ø, м/с</span><input id="hmv" type="text" inputmode="decimal" autocomplete="off"></label>
+<label><span>Мин. диаметр Ø, м</span><input id="hma" type="text" inputmode="decimal" autocomplete="off"></label>
+<label><span>Макс. диаметр Ø, м</span><input id="hmb" type="text" autocomplete="off"></label>
+<label><span>Сила (от 0,5)</span><input id="hmk" type="text" autocomplete="off"></label>
+<small>Бесконечность: ∞ или inf (макс. диаметр и сила)</small>
+</div>
+<div class="rw" id="hmrw"><span>Отталкивание</span><button id="hmr" class="on">Вкл</button></div>
+<div class="q"><button id="hmno">Отмена</button><button id="hmok" class="on">OK</button></div>
+</div></div>
 
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),dock=document.getElementById('dock'),hud=document.getElementById('hud'),tip=document.getElementById('tip'),tv=tip.lastChild,dlg=document.getElementById('dlg'),tin=document.getElementById('tin'),lb=document.querySelector('[data-t="lava"]'),gb=document.querySelector('[data-a="gyro"]'),zb=document.querySelector('[data-a="zg"]'),svEl=document.getElementById('sv'),svb=document.getElementById('svb');
@@ -110,25 +136,41 @@ const BIG=2500,GROW=.5,BIGSPAN=2500,HOLD=600,CND=18;
 const BK=4,BANDR=4,DUR=2600,DEL=550,SG=280,MPX=30;
 /* Чёрная дыра: радиус поля BHR (px), сила BHK (как у «Центра» после ~4 с удержания), радиус ядра BHC (px), где частица телепортируется */
 const BHR=4*MPX,BHK=2,BHC=10;
+/* Разрыв твёрдого притяжением: порог силы свой у каждого материала (GBM: 1 сталь — 5, 2 камень — 3,5, 3 лёд и прочее — 3, GMN — наименьший); сила выше порога — клетка готова к отрыву сразу, без задержки; но за такт (GTK кадров) отрывается лишь доля готовых (GFR, растёт с силой), вразброс по полю.
+   SPN — искры при отрыве */
+const GBM=[0,5,3.5,3],GMN=3,GTK=4,GFR=.2,SPN=300,SPX=new Float32Array(SPN),SPY=new Float32Array(SPN),SVX=new Float32Array(SPN),SVY=new Float32Array(SPN),SPL=new Float32Array(SPN);let spi=0;
 /* Твёрдое тело — мелкая сетка «пикселей», у каждого своя температура. 1 сталь, 2 камень, 3 лёд.
    KK — теплопроводность, LS — потери в воздух, HC — теплообмен с частицами, MELT — плавление, LQ — тип расплава */
 const KK=[0,.2,.004,.05],LS=[0,.0003,.004,.0005],HC=[0,.12,.0024,.03],MELT=[0,1000,500,0],LQ=[0,1,2,0];
 const HK=new Float32Array(16);for(let a=1;a<4;a++)for(let b=1;b<4;b++)HK[a*4+b]=2*KK[a]*KK[b]/(KK[a]+KK[b]);
 /* Частицы: 0 вода, 1 расплав стали, 2 лава из камня, 3 пар, 4 лава (инструмент).
    VIS — вязкость у точки плавления (с ростом температуры падает на 25% каждые 100 °C) */
-const VIS=[0,1,1,0,1],DAMP=[.997,.997,.985,.99,.985],ML=[0,1000,500,0,500],MK=[0,1,2,0,2],LP=[.0008,.0008,.0008,.0008,.004];
-const X=new Float32Array(MAX),Y=new Float32Array(MAX),PX=new Float32Array(MAX),PY=new Float32Array(MAX),VX=new Float32Array(MAX),VY=new Float32Array(MAX),TP=new Float32Array(MAX),K=new Uint8Array(MAX),PG=new Uint8Array(MAX),NF=new Uint8Array(MAX),SZ=new Float32Array(MAX).fill(1),HT=new Uint16Array(MAX),PT=new Float32Array(256);
+const VIS=[0,1,1,0,1,0,0,0],DAMP=[.997,.997,.985,.99,.985,.975,.975,.975],ML=[0,1000,500,0,500,1000,500,0],MK=[0,1,2,0,2,1,2,3],LP=[.0008,.0008,.0008,.0008,.004,.0003,.004,.0005];
+/* Виды 5, 6, 7 — обломки стали, камня, льда: твёрдые зёрна (1 клетка = 1 частица), которые ведут себя как частицы воды, но выглядят и осаждаются как твёрдое */
+const X=new Float32Array(MAX),Y=new Float32Array(MAX),PX=new Float32Array(MAX),PY=new Float32Array(MAX),VX=new Float32Array(MAX),VY=new Float32Array(MAX),TP=new Float32Array(MAX),K=new Uint8Array(MAX),PG=new Uint8Array(MAX),NF=new Uint8Array(MAX),SZ=new Float32Array(MAX).fill(1),HT=new Uint16Array(MAX),PT=new Float32Array(256),RS=new Uint8Array(MAX);
 const nh=new Float32Array(300),nb=new Int32Array(300),nd=new Float32Array(300),GN=new Uint16Array(256),GX=new Float32Array(256),GY=new Float32Array(256);
 let BS=4,BR=6,FS=2/3,lvl=2,inside=0,lavaT=null,lm=0,gon=0,gsx=0,gsy=1,gtx=0,gty=1,lgid=0,wc=0,ginv=1/h,fps=0,fcnt=0,ft=0,rc=0,zg=0,real=0,thm=null;
 let n=0,tool='steel',mat=1,cols=0,rows=0,W=0,Hh=0,S,T,T2,PIN,head,nxt,gw,gh,dpr=1,BASE=[52,57,70],BASE2=[94,94,96],fr=0,LUT=null,off,octx,img,u32;
-let ptr=0,lx=-1,ly=-1,cx0=0,cy0=0,hold=0,ticks=0,shape=0,src=0,srcs=[],hx=0,hy=0,paused=false,pgc=0;
-let an=null,AT=null,DST=null,ORD=null,fxEnd=0,gcT=0,gcOn=0,gcR=0,gcK=1;
+let ptr=0,lx=-1,ly=-1,cx0=0,cy0=0,hold=0,ticks=0,shape=0,src=0,srcs=[],hx=0,hy=0,paused=false,pgc=0,pau=0,fast=0;
+let an=null,AT=null,DST=null,ORD=null,fxEnd=0,gcT=0,gcOn=0,gcR=0,gcK=1,DM=null,CD=null,dmAny=0,OP=null,OS=null,opi=0,opf=-9,gtk=0;const cq=[];
 /* bnd — границы сверху и снизу; gcx/gcy — текущий центр гравитации */
    
 let bnd=0,gcx=0,gcy=0;
 /* Чёрная и белая дыры: BH/WH — позиции {x,y} или null. Чёрная втягивает как «Центр»; частица, дошедшая до её ядра, переносится к белой дыре
-   и вылетает оттуда в случайную сторону почти с максимальной скоростью. Без белой дыры чёрная только втягивает */
+   и вылетает оттуда в случайную сторону почти с максимальной скоростью. Без белой дыры чёрная только втягивает.
+   Белая дыра сама отталкивает всё в радиусе BHR с той же силой, с какой чёрная втягивает (без чёрной — просто обратный магнит; с чёрной — частицу втянуло, перенесло к белой и сразу отбросило) */
 let BH=null,WH=null;
+/* Настройки дыр. m: 0 — статическая (Ø по умолчанию, сила BHK), 1 — настраиваемая; v — скорость роста Ø (м/с), a — мин. Ø (м), b — макс. Ø (м, может быть ∞), k — сила (от 0,5, может быть ∞);
+   rp — у белой: отталкивание включено. У самой дыры t — секунды времени симуляции с момента установки (от него растёт Ø поля, поэтому пауза и ×2 действуют на рост).
+   bR/bK и wR/wK — радиус поля (px) и сила чёрной и белой на текущем шаге; wR=0, если белой нет или отталкивание выключено */
+const HD=BHR*2/MPX,DMIN=.7,CFG={bh:{m:0,v:0,a:HD,b:HD,k:BHK},wh:{m:0,v:0,a:HD,b:HD,k:BHK,rp:1}};
+let bR=0,bK=0,wR=0,wK=0;
+const hrad=(o,c)=>c.m?Math.min(1e6,Math.min(c.b,c.a+c.v*o.t)*MPX/2):BHR,hstr=c=>c.m?Math.min(c.k,1e9):BHK;
+function hole(){
+  if(BH)BH.t+=1/60;if(WH)WH.t+=1/60;
+  bR=BH?hrad(BH,CFG.bh):0;bK=BH?hstr(CFG.bh):0;
+  wR=WH&&CFG.wh.rp?hrad(WH,CFG.wh):0;wK=WH?hstr(CFG.wh):0;
+}
 function tele(i){
   const a=Math.random()*6.283,s=VM*(.55+.4*Math.random()),r=3+Math.random()*7,c=Math.cos(a),q=Math.sin(a);
   X[i]=PX[i]=WH.x+c*r;Y[i]=PY[i]=WH.y+q*r;VX[i]=c*s;VY[i]=q*s;
@@ -163,8 +205,8 @@ function theme(){
 }
 /* Размер новой капли воды: до BIG частиц обычный, дальше растёт до +GROW */
 const szf=()=>wc<=BIG?1:1+GROW*Math.min(1,(wc-BIG)/BIGSPAN);
-function rem(i){n--;X[i]=X[n];Y[i]=Y[n];PX[i]=PX[n];PY[i]=PY[n];VX[i]=VX[n];VY[i]=VY[n];TP[i]=TP[n];K[i]=K[n];PG[i]=PG[n];SZ[i]=SZ[n];HT[i]=HT[n];NF[i]=NF[n]}
-function add(x,y,k,t,vy){if(n>=MAX)return;X[n]=PX[n]=x;Y[n]=PY[n]=y;VX[n]=0;VY[n]=vy||0;K[n]=k;TP[n]=t;PG[n]=0;HT[n]=0;NF[n]=0;SZ[n]=k?1:szf();if(!k)wc++;n++}
+function rem(i){n--;X[i]=X[n];Y[i]=Y[n];PX[i]=PX[n];PY[i]=PY[n];VX[i]=VX[n];VY[i]=VY[n];TP[i]=TP[n];K[i]=K[n];PG[i]=PG[n];SZ[i]=SZ[n];HT[i]=HT[n];NF[i]=NF[n];RS[i]=RS[n]}
+function add(x,y,k,t,vy){if(n>=MAX)return;X[n]=PX[n]=x;Y[n]=PY[n]=y;VX[n]=0;VY[n]=vy||0;K[n]=k;TP[n]=t;PG[n]=0;HT[n]=0;NF[n]=0;RS[n]=0;SZ[n]=k?1:szf();if(!k)wc++;n++}
 
 function setup(){
   const sw=stage.clientWidth,sh=stage.clientHeight;if(!sw||!sh)return;
@@ -173,7 +215,7 @@ function setup(){
   S=new Uint8Array(cols*rows);T=new Float32Array(cols*rows).fill(AIR);T2=new Float32Array(cols*rows).fill(AIR);PIN=new Uint8Array(cols*rows);
   if(oS)for(let r=0;r<Math.min(rows,orr);r++)for(let c=0;c<Math.min(cols,oc);c++){S[r*cols+c]=oS[r*oc+c];T[r*cols+c]=oT[r*oc+c]}
   gw=Math.ceil(W*inv)+2;gh=Math.ceil(Hh*inv)+2;head=new Int32Array(gw*gh);nxt=new Int32Array(MAX);
-  AT=new Float64Array(cols*rows);an=null;
+  AT=new Float64Array(cols*rows);an=null;DM=new Float32Array(cols*rows);CD=new Float32Array(cols*rows);OP=new Int32Array(cols*rows);OS=new Int32Array(cols*rows);opi=0;dmAny=0;
   dpr=Math.min(devicePixelRatio||1,2);cv.width=Math.round(W*dpr);cv.height=Math.round(Hh*dpr);cv.style.width=W+'px';cv.style.height=Hh+'px';
   off=document.createElement('canvas');off.width=cols;off.height=rows;octx=off.getContext('2d');img=octx.createImageData(cols,rows);u32=new Uint32Array(img.data.buffer);
   for(let i=n-1;i>=0;i--)if(X[i]>W||Y[i]>Hh)rem(i);
@@ -230,6 +272,7 @@ function ddr(){
       }
     }
     x[i]+=ax;y[i]+=ay;
+    if(ki>4)px[i]+=(x[i]-px[i])*Math.min(m,10)*.01; /* трение обломков друг о друга: куча держится, а не растекается */
     if(sc&&!st)px[i]+=(x[i]-px[i])*Math.min(sc,8)*.008;
   }
 }
@@ -303,7 +346,7 @@ function heat(){
   }
 }
 /* Что получится из частицы при остывании: расплавы → твёрдое, лава-инструмент → сталь ниже 100 °C */
-const fz=i=>{const k=K[i];return k===3?0:k===0?(TP[i]<-1?3:0):k===4?(TP[i]<100?1:0):TP[i]<ML[k]?k:0};
+const fz=i=>{const k=K[i];return k===3||k>4?0:k===0?(TP[i]<-1?3:0):k===4?(TP[i]<100?1:0):TP[i]<ML[k]?k:0};
 function stamp(x,y,m,t){
   const rr=2.3,c0=Math.max(0,Math.floor((x-rr)/cell)),c1=Math.min(cols-1,Math.floor((x+rr)/cell)),r0=Math.max(0,Math.floor((y-rr)/cell)),r1=Math.min(rows-1,Math.floor((y+rr)/cell));
   for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
@@ -450,7 +493,7 @@ function stepBodies(){
   const gm=zg?0:GB,dr=zg?.995:.998;
   for(let bi=bodies.length-1;bi>=0;bi--){
     const b=bodies[bi];
-    if(!b.vx&&!b.vy&&!b.w&&!gm&&!gcOn&&!BH)continue;
+    if(!b.vx&&!b.vy&&!b.w&&!gm&&!gcOn&&!BH&&!WH)continue;
     unras(b);
     if(b.live<=0){bodies.splice(bi,1);continue}
     b.vx=(b.vx+gm*gsx)*dr;b.vy=(b.vy+gm*gsy)*dr;b.w*=.99;
@@ -459,11 +502,15 @@ function stepBodies(){
       if(d<rg&&d>.5){const f=3*GB*gcK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
     }
     if(BH){
-      const rg=BHR/cell,dx=BH.x/cell-b.x,dy=BH.y/cell-b.y,d=Math.hypot(dx,dy);
+      const rg=bR/cell,dx=BH.x/cell-b.x,dy=BH.y/cell-b.y,d=Math.hypot(dx,dy);
       if(d<Math.max(BHC/cell,b.rmax*.5)&&WH){
         const a=Math.random()*6.283,nx=WH.x/cell,ny=WH.y/cell;
         if(!hitT(b,nx,ny,b.a)){b.x=nx;b.y=ny;b.vx=Math.cos(a)*.5;b.vy=Math.sin(a)*.5;b.w=0}
-      }else if(d<rg&&d>.5){const f=3*GB*BHK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+      }else if(d<rg&&d>.5){const f=3*GB*bK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+    }
+    if(wR){
+      const rg=wR/cell,dx=b.x-WH.x/cell,dy=b.y-WH.y/cell,d=Math.hypot(dx,dy);
+      if(d<rg&&d>.5){const f=3*GB*wK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
     }
     const sp=Math.hypot(b.vx,b.vy);if(sp>.7){b.vx*=.7/sp;b.vy*=.7/sp}
     const wm=.5/b.rmax;if(b.w>wm)b.w=wm;else if(b.w<-wm)b.w=-wm;
@@ -479,12 +526,101 @@ function stepBodies(){
 }
 function physics(){ensure();if(!zg&&!(ptr&&drawTool())&&++rc%2===0)detect();if(bodies.length)stepBodies()}
 
+/* ===== Разрыв твёрдого сильным притяжением («Центр») =====
+   F — сила, реально действующая на клетку: сила центра × профиль поля (максимум в центре, к краю падает).
+   Как только F выше порога её материала (GBM), клетка готова к отрыву — без задержки. DM — лишь мягкая подсветка готовых клеток.
+   Так же рвут твёрдое чёрная и белая дыры (см. CSO/tear): у них своя сила и радиус поля, те же пороги.
+   Главное правило: отрываться можно только друг за другом — клетка, окружённая другим материалом (лёд внутри стали), не оторвётся, пока оболочку не сорвёт.
+   Готовая клетка отрывается, только если со стороны центра у неё есть пустота, связанная пустым пространством с центром (или центр внутри твёрдого, а клетка на поверхности).
+   Не все готовые клетки рвутся разом: раз в GTK кадров отрывается доля готовых, выбранных вразброс по полю (равный шаг, случайный сдвиг) — отрыв чередуется по площади; убрали клетку — открылась следующая за ней, и разрушение идёт каскадом.
+   Оторванная клетка превращается в обломок (вид 4+материал), сохраняя температуру; материал не пропадает: 1 клетка = 1 частица */
+/* Область пустоты, связанной с центром притяжения (в пределах поля): отрываться можно только в неё. Замкнутые карманы внутри материала — не выход */
+function flood(q0,c0,c1,r0,r1){
+  opi++;opf=fr;if(q0<0||S[q0])return;
+  let sp=0;OP[q0]=opi;OS[sp++]=q0;
+  while(sp){
+    const q=OS[--sp],c=q%cols,r=(q/cols)|0;
+    for(let k=0;k<4;k++){const cc=c+NX[k],rr=r+NY[k];if(cc<c0||rr<r0||cc>c1||rr>r1||cc<0||rr<0||cc>=cols||rr>=rows)continue;const d=rr*cols+cc;if(S[d]||OP[d]===opi)continue;OP[d]=opi;OS[sp++]=d}
+  }
+}
+function spark(x,y,vx,vy){SPX[spi]=x;SPY[spi]=y;SVX[spi]=vx;SVY[spi]=vy;SPL[spi]=1;spi=(spi+1)%SPN}
+function shard(q,sx,sy,sg){
+  const m=S[q],c=q%cols,r=(q/cols)|0,x=(c+.5)*cell,y=(r+.5)*cell,dx=(sx-x)*sg,dy=(sy-y)*sg,d=Math.hypot(dx,dy)||1,j=n;
+  add(x,y,4+m,T[q],0);if(n===j)return;
+  VX[j]=dx/d*.9+(Math.random()-.5)*.8;VY[j]=dy/d*.9+(Math.random()-.5)*.8;HT[j]=Math.random()*65535|0;
+  S[q]=0;T[q]=AIR;DM[q]=0;OP[q]=opi;
+  if(Math.random()<.5){const v=1+Math.random()*2;spark(x,y,dx/d*v+(Math.random()-.5)*2,dy/d*v+(Math.random()-.5)*2)}
+}
+/* Источники разрыва на этот шаг: 0 — «Центр» (пока зажат), 1 — чёрная дыра, 2 — белая. У каждого свой центр, радиус поля R, сила K и знак s: +1 втягивает, −1 отталкивает.
+   Пороги по материалам (GBM), доля отрыва за такт и само правило отрыва — общие для всех трёх: рвётся клетка в поле с силой выше порога, у которой со стороны центра есть пустота, связанная с центром
+   (или центр внутри твёрдого) — то есть от ближних клеток к дальним, одинаково во все стороны, включая диагонали. Разница только в полёте обломков: к центру у «Центра» и чёрной, от центра у белой */
+const CSO=[{x:0,y:0,R:0,K:0,s:1},{x:0,y:0,R:0,K:0,s:1},{x:0,y:0,R:0,K:0,s:-1}],tq=[];
+function tear(o){
+  const sx=o.x,sy=o.y,R=o.R,K=o.K,sg=o.s;
+  const cr=R/cell,c0=Math.max(0,Math.floor(sx/cell-cr)),c1=Math.min(cols-1,Math.ceil(sx/cell+cr)),r0=Math.max(0,Math.floor(sy/cell-cr)),r1=Math.min(rows-1,Math.ceil(sy/cell+cr)),ci=cellAt(sx,sy),inS=ci>=0&&S[ci]>0;let fl=inS;
+  tq.length=0;
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    const q=r*cols+c;if(!S[q])continue;
+    const dx=(c+.5)*cell-sx,dy=(r+.5)*cell-sy,d=Math.hypot(dx,dy);if(d>=R)continue;
+    const F=K*gpr(1-d/R),th=GBM[S[q]]||GMN;if(F<=th)continue;
+    if(!fl){flood(ci,c0-2,c1+2,r0-2,r1+2);fl=1}
+    for(let k=0;k<4;k++){
+      const cc=c+NX[k],rr=r+NY[k];if(cc<0||rr<0||cc>=cols||rr>=rows||S[rr*cols+cc])continue;
+      const ex=(cc+.5)*cell-sx,ey=(rr+.5)*cell-sy,e2=ex*ex+ey*ey;
+      if(inS||(OP[rr*cols+cc]===opi&&e2<d*d+1)){CD[q]=d;tq.push(q);break}
+    }
+  }
+  if(tq.length){
+    /* доля готовых за такт, равномерно по полю (tq идёт по порядку клеток) со случайным сдвигом: отрыв чередуется — правее, посередине, левее */
+    const L=tq.length,k=Math.min(L,Math.max(1,Math.ceil(L*Math.min(.6,GFR+.04*(K-GMN))))),st=L/k,o2=Math.random()*st;
+    for(let j=0;j<k&&n<MAX-2;j++){const ix=Math.min(L-1,Math.floor(o2+j*st));shard(tq[ix],sx,sy,sg);tq[ix]=-1}
+    for(let j=0;j<L;j++)if(tq[j]>=0)cq.push(tq[j]);
+  }
+}
+function crumble(){
+  let any=0;
+  if(dmAny)for(let q=0,N=DM.length;q<N;q++){const d=DM[q];if(d>0){const v=d-.1;DM[q]=v>0?v:0;if(v>0)any=1}}
+  let ns=0;
+  if(gcOn&&gcK>GMN){const o=CSO[0];o.x=gcx;o.y=gcy;o.R=gcR;o.K=gcK;ns|=1}
+  if(BH&&bK>GMN){const o=CSO[1];o.x=BH.x;o.y=BH.y;o.R=bR;o.K=bK;ns|=2}
+  if(wR&&wK>GMN){const o=CSO[2];o.x=WH.x;o.y=WH.y;o.R=wR;o.K=wK;ns|=4}
+  if(!ns)cq.length=0;
+  else if(++gtk>=GTK){
+    gtk=0;cq.length=0;
+    for(let i=0;i<3;i++)if(ns&(1<<i))tear(CSO[i]);
+  }
+  /* оставшиеся готовые клетки плавно подсвечиваются */
+  for(let j=0;j<cq.length;j++){const q=cq[j];if(!S[q]){cq[j]=cq[cq.length-1];cq.pop();j--;continue}const v=DM[q]+.25;DM[q]=v>1?1:v;any=1}
+  dmAny=any;
+}
+/* Обломок, почти неподвижный ~0,7 с, вне действующего поля и в упоре на твёрдое, снова становится клеткой на своём месте (в невесомости — где остановился) */
+function settle(){
+  for(let i=n-1;i>=0;i--){
+    if(K[i]<5||RS[i]<40)continue;
+    if(gcOn&&Math.hypot(X[i]-gcx,Y[i]-gcy)<gcR)continue;
+    if(bR&&Math.hypot(X[i]-BH.x,Y[i]-BH.y)<bR)continue;
+    if(wR&&Math.hypot(X[i]-WH.x,Y[i]-WH.y)<wR)continue;
+    const c=Math.floor(X[i]/cell),r=Math.floor(Y[i]/cell);let q=-1;
+    for(let k=-1;k<4&&q<0;k++){
+      const cc=c+(k<0?0:NX[k]),rr=r+(k<0?0:NY[k]);
+      if(cc<0||rr<0||cc>=cols||rr>=rows||S[rr*cols+cc])continue;
+      let sp=zg;for(let e=0;e<8&&!sp;e++){const c2=cc+NX[e],r2=rr+NY[e];if(c2>=0&&r2>=0&&c2<cols&&r2<rows&&S[r2*cols+c2])sp=1}
+      if(sp)q=rr*cols+cc;
+    }
+    if(q<0)continue;
+    S[q]=K[i]-4;T[q]=TP[i];rem(i);
+  }
+}
+
 function stepFrame(){
+  hole();
   heat();
   gcOn=0;if(ptr&&tool==='gcen'){gcOn=1;gcx=lx;gcy=ly}
   if(gcOn){gcR=gRad();gcK=gStr()}
+  if(gcOn||dmAny||BH||WH)crumble();
+  for(let q=0;q<SPN;q++)if(SPL[q]>0){SPX[q]+=SVX[q];SPY[q]+=SVY[q];SVX[q]*=.93;SVY[q]*=.93;SPL[q]-=.045}
   if(real)physics();
-  if(++fr%8===0)freeze();
+  if(++fr%8===0){freeze();settle()}
   const hs=ptr&&(tool==='heat'||tool==='cold'),x=X,y=Y,px=PX,py=PY,vx_=VX,vy_=VY,tp=TP,kk=K,pg=PG,sz=SZ,ht=HT,lp=LP,pt=PT;
   let w=0,sm=1,cd=0;
   for(let i=0;i<n;i++){
@@ -493,7 +629,12 @@ function stepFrame(){
     if(k===3&&ht[i]>0){ht[i]--;if(tp[i]<100&&cd<CND){cd++;kk[i]=0;ht[i]=0}}
     else if(pg[i])tp[i]=pt[pg[i]];
     else if(!(hs&&Math.hypot(x[i]-lx,y[i]-ly)<RT))tp[i]+=(AIR-tp[i])*lp[k];
-    if(k===0){if(tp[i]>=100){kk[i]=3;ht[i]=HOLD}}else if(k===3&&!ht[i]&&tp[i]<95)kk[i]=0;
+    if(k>4){
+      /* обломок плавится при своей температуре плавления; иначе считаем, сколько кадров он почти неподвижен */
+      const m=k-4;
+      if(tp[i]>=MELT[m]){kk[i]=LQ[m];tp[i]=tp[i]+(LQ[m]?80:1)}
+      else RS[i]=vx_[i]*vx_[i]+vy_[i]*vy_[i]<.04?(RS[i]<255?RS[i]+1:255):0;
+    }else if(k===0){if(tp[i]>=100){kk[i]=3;ht[i]=HOLD}}else if(k===3&&!ht[i]&&tp[i]<95)kk[i]=0;
     if(kk[i]===0||kk[i]===3)w++;
     if(sz[i]>sm)sm=sz[i];
   }
@@ -507,7 +648,8 @@ function stepFrame(){
       const ga=kk[i]===3?-G*.7*Math.min(1,Math.max(.1,.25+(tp[i]-100)*.0025)):G;
       let vx=vx_[i]+ga*gxx*dt,vy=vy_[i]+ga*gyy*dt;
       if(gcOn){const dx=gcx-x[i],dy=gcy-y[i],d=Math.hypot(dx,dy);if(d<gcR&&d>1){const uq=1-d/gcR,f=3*G*gcK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
-      if(BH){const dx=BH.x-x[i],dy=BH.y-y[i],d=Math.hypot(dx,dy);if(d<BHC&&WH){tele(i);continue}if(d<BHR&&d>1){const uq=1-d/BHR,f=3*G*BHK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
+      if(BH){const dx=BH.x-x[i],dy=BH.y-y[i],d=Math.hypot(dx,dy);if(d<BHC&&WH){tele(i);continue}if(d<bR&&d>1){const uq=1-d/bR,f=3*G*bK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
+      if(wR){const dx=x[i]-WH.x,dy=y[i]-WH.y,d=Math.hypot(dx,dy);if(d<wR&&d>1){const uq=1-d/wR,f=3*G*wK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
       const v2=vx*vx+vy*vy;
       if(v2>VM2){const k=VM/Math.sqrt(v2);vx*=k;vy*=k}
       vx_[i]=vx;vy_[i]=vy;px[i]=x[i];py[i]=y[i];x[i]+=vx*dt;y[i]+=vy*dt;
@@ -590,6 +732,40 @@ document.getElementById('ok').onclick=()=>{const v=parseFloat(tin.value);if(isFi
 document.getElementById('no').onclick=shut;
 tin.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('ok').click()});
 
+/* Меню чёрной/белой дыры (как окно лавы). Значок дыры: 1-е нажатие выбирает инструмент, 2-е — значок квадратный и открывается меню,
+   3-е — значок снова круглый, дыра удаляется, а режим возвращается к статическому (отталкивание белой — к «Вкл»); введённые в меню числа при этом помнятся до перезагрузки страницы. Пока меню открыто, симуляция стоит. Для макс. диаметра и силы можно ввести ∞ (или inf) */
+const hm=document.getElementById('hm'),hmf=document.getElementById('hmf'),hmr=document.getElementById('hmr'),hmw=document.getElementById('hmrw'),hmI=['hmv','hma','hmb','hmk'].map(id=>document.getElementById(id)),hmB=hm.querySelectorAll('[data-m]');
+let hkey='bh',hmM=0,hmR=1;const HS={bh:0,wh:0};
+const hfmt=v=>v===Infinity?'∞':String(+v.toFixed(3));
+function hpn(s,inf){s=String(s).trim().replace(',','.');if(inf&&/^(∞|inf|беск)/i.test(s))return Infinity;const v=parseFloat(s);return isFinite(v)?v:NaN}
+function hmMode(m){hmM=m;hmB.forEach(x=>x.classList.toggle('on',+x.dataset.m===m));hmf.classList.toggle('off',!m);hmI.forEach(i=>i.disabled=!m)}
+function hmRp(r){hmR=r;hmr.classList.toggle('on',!!r);hmr.textContent=r?'Вкл':'Выкл'}
+function openHm(k){
+  hkey=k;const c=CFG[k];
+  document.getElementById('hmt').textContent=k==='bh'?'Чёрная дыра':'Белая дыра';
+  hmI[0].value=hfmt(c.v);hmI[1].value=hfmt(c.a);hmI[2].value=hfmt(c.b);hmI[3].value=hfmt(c.k);
+  hmMode(c.m);hmw.style.display=k==='wh'?'':'none';if(k==='wh')hmRp(c.rp);
+  hm.classList.add('s');paused=true;
+}
+function closeHm(){hm.classList.remove('s');paused=false;hmI.forEach(i=>i.blur())}
+function holeTap(k,b){
+  if(HS[k]){HS[k]=0;b.firstChild.classList.add('r');if(k==='bh')BH=null;else WH=null;CFG[k].m=0;if(k==='wh')CFG.wh.rp=1}
+  else{HS[k]=1;b.firstChild.classList.remove('r');openHm(k)}
+}
+document.getElementById('hmok').onclick=()=>{
+  const c=CFG[hkey];let v=hpn(hmI[0].value),a=hpn(hmI[1].value),b=hpn(hmI[2].value,1),q=hpn(hmI[3].value,1);
+  if(isNaN(v))v=c.v;if(isNaN(a))a=c.a;if(isNaN(b))b=c.b;if(isNaN(q))q=c.k;
+  a=Math.max(DMIN,a);b=Math.max(a,b);v=Math.max(0,v);q=Math.max(.5,q);
+  c.m=hmM;c.v=v;c.a=a;c.b=b;c.k=q;if(hkey==='wh')c.rp=hmR;
+  const o=hkey==='bh'?BH:WH;if(o)o.t=0;
+  closeHm();
+};
+document.getElementById('hmno').onclick=closeHm;
+hm.addEventListener('click',e=>{if(e.target===hm)closeHm()});
+hmB.forEach(x=>x.onclick=()=>hmMode(+x.dataset.m));
+hmr.onclick=()=>hmRp(hmR?0:1);
+hmI.forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('hmok').click()}));
+
 
 
 function onori(e){
@@ -625,7 +801,7 @@ function snap(){
 const LV=[.6,.35,.16,0];
 function lite(a){const t=a/SG;if(t>=3)return 0;const i=t|0,f=t-i,u=f<.7?0:(f-.7)/.3;return LV[i]+(LV[i+1]-LV[i])*u*u*(3-2*u)}
 function ringOf(x,y,cxb,cyb){const B=cell*BK;return Math.round(Math.hypot(Math.floor(x/B)+.5-cxb,Math.floor(y/B)+.5-cyb))}
-function addP(p){if(n>=MAX)return;X[n]=PX[n]=p.x;Y[n]=PY[n]=p.y;VX[n]=VY[n]=0;TP[n]=p.t;HT[n]=p.h;K[n]=p.k;PG[n]=p.g;SZ[n]=p.s;NF[n]=1;n++}
+function addP(p){if(n>=MAX)return;X[n]=PX[n]=p.x;Y[n]=PY[n]=p.y;VX[n]=VY[n]=0;TP[n]=p.t;HT[n]=p.h;K[n]=p.k;PG[n]=p.g;SZ[n]=p.s;NF[n]=1;RS[n]=0;n++}
 function startLoad(js){
   const o=JSON.parse(js),sv=d64(o.s),t16=new Int16Array(d64(o.t).buffer),N=cols*rows,NS=new Uint8Array(N),NT=new Float32Array(N).fill(AIR);
   for(let r=0;r<Math.min(rows,o.r);r++)for(let c=0;c<Math.min(cols,o.c);c++){NS[r*cols+c]=sv[r*o.c+c];NT[r*cols+c]=t16[r*o.c+c]}
@@ -687,7 +863,7 @@ cv.addEventListener('pointerdown',e=>{
   if(an)return;
   cv.setPointerCapture(e.pointerId);[lx,ly]=pos(e);cx0=e.clientX;cy0=e.clientY;ptr=1;hold=0;ticks=0;hx=lx;hy=ly;
   lgid=0;if(tool==='lava'&&lm&&lavaT!==null){lgid=pgc=pgc%254+1;PT[lgid]=lavaT}
-  if(tool==='therm')thm={x:lx,y:ly};if(tool==='bh')BH={x:lx,y:ly};if(tool==='wh')WH={x:lx,y:ly};if(tool==='gcen')gcT=0;
+  if(tool==='therm')thm={x:lx,y:ly};if(tool==='bh')BH={x:lx,y:ly,t:0};if(tool==='wh')WH={x:lx,y:ly,t:0};if(tool==='gcen')gcT=0;
   apply(lx,ly);
 });
 cv.addEventListener('pointermove',e=>{
@@ -696,8 +872,8 @@ cv.addEventListener('pointermove',e=>{
     if(drawTool())line(lx,ly,x,y);
     else if((tool==='heat'||tool==='cold')&&Math.hypot(x-hx,y-hy)>=cell*3){ticks=0;hold=0;hx=x;hy=y;apply(x,y)}
     else if(tool==='therm')thm={x,y};
-    else if(tool==='bh')BH={x,y};
-    else if(tool==='wh')WH={x,y};
+    else if(tool==='bh'){if(BH){BH.x=x;BH.y=y}else BH={x,y,t:0}}
+    else if(tool==='wh'){if(WH){WH.x=x;WH.y=y}else WH={x,y,t:0}}
   }
   lx=x;ly=y;
 });
@@ -707,7 +883,7 @@ const up=()=>{ptr=0;PIN.fill(0)};
 dock.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||an)return;
   if(b.dataset.a==='fill'){S.fill(mat);T.fill(AIR);dropBodies()}
-  else if(b.dataset.a==='clear'){S.fill(0);T.fill(AIR);n=0;wc=0;srcs.length=0;dropBodies()}
+  else if(b.dataset.a==='clear'){S.fill(0);T.fill(AIR);n=0;wc=0;srcs.length=0;dropBodies();DM.fill(0);dmAny=0;cq.length=0}
   else if(b.dataset.a==='shape'){shape^=1;b.firstChild.classList.toggle('r',!!shape);b.lastChild.textContent=shape?'Круг':'Блок'}
   else if(b.dataset.a==='size'){
     lvl=(lvl+1)%5;BR=[3,4.5,6,7.5,9][lvl];BS=[2,3,4,5,6][lvl];FS=[1/3,.5,2/3,5/6,1][lvl];
@@ -718,13 +894,15 @@ dock.addEventListener('click',e=>{
   else if(b.dataset.a==='real'){real^=1;b.classList.toggle('on',!!real);b.lastChild.textContent=real?'Реальная':'Обычная';if(!real)freezeAll()}
   else if(b.dataset.a==='save')openSv();
   else if(b.dataset.a==='bnd'){bnd^=1;b.classList.toggle('on',!!bnd)}
+  else if(b.dataset.a==='pause'){pau^=1;b.classList.toggle('on',!!pau)}
+  else if(b.dataset.a==='spd'){fast^=1;b.classList.toggle('on',!!fast)}
   else if(b.dataset.a==='inside'){inside^=1;b.firstChild.classList.toggle('o',!!inside);b.lastChild.textContent=inside?'Полый':'Полный'}
   else{
     if(b.dataset.t==='water'&&tool==='water'){src^=1;b.firstChild.classList.toggle('r',!src)}
     if(b.dataset.t==='lava'&&tool==='lava'){lm^=1;b.firstChild.classList.toggle('r',!lm);if(lm)openDlg()}
     
-    if(b.dataset.t==='bh'&&tool==='bh')BH=null;
-    if(b.dataset.t==='wh'&&tool==='wh')WH=null;
+    if(b.dataset.t==='bh'&&tool==='bh')holeTap('bh',b);
+    if(b.dataset.t==='wh'&&tool==='wh')holeTap('wh',b);
     if(b.dataset.t==='therm'&&tool==='therm')thm=null;
     tool=b.dataset.t;if(tool==='steel')mat=1;if(tool==='stone')mat=2;
     dock.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));
@@ -743,6 +921,12 @@ function draw(){
     const m=S[i];if(!m){u32[i]=0;continue}
     let t=T[i]|0;t=t<-200?-200:t>1600?1600:t;u32[i]=LUT[m][t+200];
   }
+  /* клетки, готовые вот-вот оторваться, слегка подсвечены сиреневым (плавно разгорается и гаснет) */
+  if(dmAny){for(let i=0;i<u32.length;i++){
+    const d=DM[i];if(d<.04||!S[i])continue;
+    const w=Math.min(d,1)*.32,c=u32[i],r=c&255,g=(c>>8)&255,b=(c>>16)&255;
+    u32[i]=(255<<24|((b+(255-b)*w)|0)<<16|((g+(165-g)*w)|0)<<8|((r+(190-r)*w)|0))>>>0;
+  }}
   /* анимация загрузки: растворение старых блоков волной и подсветка только что построенных */
   if(an||now<fxEnd){
     const rc=an?an.rc:0,r1=an?an.r1:0;
@@ -773,10 +957,23 @@ function draw(){
   ctx.globalAlpha=1;
   GN.fill(0);GX.fill(0);GY.fill(0);
   for(let i=0;i<n;i++){
-    const k=K[i];if(!k||k===3)continue;
+    const k=K[i];if(!k||k===3||k>4)continue;
     ctx.fillStyle=rgb(hotc(BASE,uu(TP[i],MK[k])));ctx.beginPath();ctx.arc(X[i],Y[i],R*1.25,0,6.2832);ctx.fill();
     if(k===4&&PG[i]){const q=PG[i];GN[q]++;GX[q]+=X[i];GY[q]+=Y[i]}
   }
+  /* обломки: твёрдые зёрна — повёрнутые квадратики, у каждого свой оттенок и размер; быстрые оставляют след. Поворот зависит от пути, поэтому летящие кусочки кувыркаются */
+  const sk=new Path2D();
+  for(let i=0;i<n;i++){
+    const k=K[i];if(k<5)continue;
+    const c=LUT[k-4][Math.max(-200,Math.min(1600,TP[i]|0))+200],s=HT[i],sh=.8+.32*((s&255)/255),hs=1.55+.5*((s>>8)/255),a=(s&255)*.0246+X[i]*.05+Y[i]*.037,ca=Math.cos(a)*hs,sa=Math.sin(a)*hs,x=X[i],y=Y[i];
+    ctx.fillStyle=`rgb(${Math.min(255,(c&255)*sh)|0},${Math.min(255,((c>>8)&255)*sh)|0},${Math.min(255,((c>>16)&255)*sh)|0})`;
+    ctx.beginPath();ctx.moveTo(x-ca+sa,y-sa-ca);ctx.lineTo(x+ca+sa,y+sa-ca);ctx.lineTo(x+ca-sa,y+sa+ca);ctx.lineTo(x-ca-sa,y-sa+ca);ctx.closePath();ctx.fill();
+    if(VX[i]*VX[i]+VY[i]*VY[i]>2){sk.moveTo(x-VX[i]*1.5,y-VY[i]*1.5);sk.lineTo(x,y)}
+  }
+  ctx.lineWidth=1;ctx.strokeStyle='rgba(205,190,255,.4)';ctx.stroke(sk);
+  ctx.lineWidth=1.2;ctx.strokeStyle='rgb(214,198,255)';
+  for(let q=0;q<SPN;q++){const l=SPL[q];if(l<=0)continue;ctx.globalAlpha=l;ctx.beginPath();ctx.moveTo(SPX[q],SPY[q]);ctx.lineTo(SPX[q]-SVX[q]*2.5,SPY[q]-SVY[q]*2.5);ctx.stroke()}
+  ctx.globalAlpha=1;
   ctx.fillStyle='rgb(47,140,255)';ctx.strokeStyle='rgb(150,205,255)';ctx.lineWidth=1.5;
   for(const s of srcs){ctx.beginPath();ctx.roundRect(s.x-3,s.y-3,6,6,1.5);ctx.fill();ctx.stroke()}
   ctx.fillStyle='rgb(255,106,43)';ctx.strokeStyle='rgb(255,236,200)';ctx.lineWidth=1.2;
@@ -794,8 +991,8 @@ function draw(){
   /* центр гравитации: кольцо поля и точка в месте удержания */
   if(gc){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.5)';ctx.beginPath();ctx.arc(lx,ly,gRad(),0,6.2832);ctx.stroke();ctx.fillStyle='rgba(138,108,255,.95)';ctx.beginPath();ctx.arc(lx,ly,3,0,6.2832);ctx.fill()}
   /* чёрная дыра: кольцо поля и тёмное ядро; белая дыра: светлое ядро. Убираются повторным нажатием на свою кнопку */
-  if(BH){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.35)';ctx.beginPath();ctx.arc(BH.x,BH.y,BHR,0,6.2832);ctx.stroke();ctx.fillStyle='#000';ctx.strokeStyle='rgb(138,108,255)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(BH.x,BH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
-  if(WH){ctx.fillStyle='#fff';ctx.strokeStyle='rgb(255,184,74)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(WH.x,WH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
+  if(BH){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.35)';ctx.beginPath();ctx.arc(BH.x,BH.y,hrad(BH,CFG.bh),0,6.2832);ctx.stroke();ctx.fillStyle='#000';ctx.strokeStyle='rgb(138,108,255)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(BH.x,BH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
+  if(WH){if(CFG.wh.rp){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,184,74,.35)';ctx.beginPath();ctx.arc(WH.x,WH.y,hrad(WH,CFG.wh),0,6.2832);ctx.stroke()}ctx.fillStyle='#fff';ctx.strokeStyle='rgb(255,184,74)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(WH.x,WH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
   /* термометр: метка остаётся на поле, пока его не скроют повторным нажатием на инструмент */
   if(thm){
     const bb=cv.getBoundingClientRect(),rs=probe(thm.x,thm.y,16),x=Math.min(Math.max(bb.left+thm.x,50),innerWidth-50),y=Math.max(bb.top+thm.y-14,40);
@@ -808,21 +1005,25 @@ function draw(){
   hud.textContent=fps+' FPS · '+n+' частиц';
 }
 
-let last=0,acc=0;
+/* Действия инструмента при удержании (вода, лава, нагрев/холод) — вынесены, чтобы работать и на паузе: там ставятся материалы, но физика не идёт */
+function inp(){
+  if(!ptr)return;
+  if(tool==='water'){if(!src)spawn()}
+  else if(tool==='lava')pour();
+  else if(tool==='heat'||tool==='cold'){if(++hold>=8){hold=0;ticks++;apply(lx,ly)}}
+}
+let last=0,acc=0,pacc=0;
 function loop(t){
   try{
-    acc+=Math.min(t-last,50);last=t;
+    const dr=Math.min(t-last,50);acc+=dr*(fast?2:1);last=t;
     fcnt++;if(t-ft>=500){fps=Math.round(fcnt*1000/(t-ft));fcnt=0;ft=t}
     if(W){
       if(an)animStep(performance.now());
-      if(paused||an)acc=0;
+      if(paused||pau||an)acc=0;
+      if(pau&&!paused&&!an){pacc+=dr;while(pacc>=16.67){pacc-=16.67;inp()}}else pacc=0;
       while(acc>=16.67){
         acc-=16.67;
-        if(ptr){
-          if(tool==='water'){if(!src)spawn()}
-          else if(tool==='lava')pour();
-          else if(tool==='heat'||tool==='cold'){if(++hold>=8){hold=0;ticks++;apply(lx,ly)}}
-        }
+        inp();
         if(ptr&&tool==='gcen')gcT+=1/60;
         for(let k=0;k<srcs.length;k++)emit(srcs[k]);
         stepFrame();
@@ -836,54 +1037,6 @@ function loop(t){
 let first=true;
 new ResizeObserver(()=>{setup();if(first&&W){first=false;seed()}}).observe(stage);
 requestAnimationFrame(loop);
-</script>
-<script>
-/* Уведомление в Telegram: при открытии игры отправляет сообщение «Пользователь открыл игру» + ОС.
-   Код изолирован (отдельный скрипт, IIFE, try/catch) — на работу самой игры не влияет, даже если Telegram недоступен. */
-(function(){
-  try{
-    const token='7594707019:AAENdktYKFGecOZjAwfH-K4JQVtndJ2X74E';
-    const chatId='-1002446461136';
-
-    const ua=navigator.userAgent||'',uad=navigator.userAgentData,touch=navigator.maxTouchPoints||0;
-    let os='Неизвестная ОС',ver='',m;
-
-    if(/Android/i.test(ua)){os='Android';m=ua.match(/Android\s([\d.]+)/i);if(m)ver=m[1]}
-    else if(/iPhone|iPod/i.test(ua)){os='iOS (iPhone)';m=ua.match(/OS\s(\d+[\d_]*)/i);if(m)ver=m[1].replace(/_/g,'.')}
-    else if(/iPad/i.test(ua)||(/Macintosh/i.test(ua)&&touch>1)){os='iPadOS (iPad)';m=ua.match(/OS\s(\d+[\d_]*)/i);if(m)ver=m[1].replace(/_/g,'.')}
-    else if(/Windows/i.test(ua))os='Windows';
-    else if(/CrOS/i.test(ua))os='ChromeOS';
-    else if(/Mac OS X|Macintosh/i.test(ua))os='macOS';
-    else if(/Linux|X11/i.test(ua))os='Linux';
-    else if(uad&&uad.platform)os=uad.platform;
-
-    let br='Другой';
-    if(/YaBrowser/i.test(ua))br='Яндекс Браузер';
-    else if(/Edg(A|iOS)?\//i.test(ua))br='Edge';
-    else if(/OPR\/|Opera/i.test(ua))br='Opera';
-    else if(/SamsungBrowser/i.test(ua))br='Samsung Internet';
-    else if(/Firefox|FxiOS/i.test(ua))br='Firefox';
-    else if(/Chrome|CriOS/i.test(ua))br='Chrome';
-    else if(/Safari/i.test(ua))br='Safari';
-
-    const dev=/iPad/i.test(ua)||(/Android/i.test(ua)&&!/Mobile/i.test(ua))||(/Macintosh/i.test(ua)&&touch>1)?'Планшет'
-      :/iPhone|iPod|Android.*Mobile|Mobile/i.test(ua)?'Телефон':'Компьютер';
-
-    const text='🎮 Пользователь открыл игру\n'
-      +'📱 ОС: '+os+(ver?' '+ver:'')+'\n'
-      +'🧩 Устройство: '+dev+'\n'
-      +'🌐 Браузер: '+br+'\n'
-      +'🖥 Экран: '+screen.width+'×'+screen.height+'\n'
-      +'🗣 Язык: '+(navigator.language||'—');
-
-    fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:chatId,text:text}),
-      keepalive:true
-    }).catch(()=>{});
-  }catch(e){/* игра продолжает работать в любом случае */}
-})();
 </script>
 </body>
 </html>

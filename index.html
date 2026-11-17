@@ -41,11 +41,16 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 #dlg button.on,#hm button.on{background:var(--acc);color:var(--accfg)}
 #sv small{display:block;font-size:11px;color:var(--mut);margin-top:3px}
 #sv .slot{width:100%;flex-direction:column;align-items:flex-start;gap:0;padding:12px;font-size:14px;background:var(--bg);color:var(--fg);border-radius:14px;text-align:left}
-#sv .row{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:14px;padding:6px 6px 6px 12px;font-size:14px}
-#sv .nm{flex:1}
-#sv .row button{width:auto;flex-direction:row;padding:10px 11px;font-size:12px;background:var(--panel);color:var(--fg);border-radius:11px}
+#sv .row{display:grid;grid-template-columns:1fr 1fr 42px;gap:6px;background:var(--bg);border-radius:14px;padding:10px;font-size:14px}
+#sv .nm{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 3px 2px}
+#sv .nm small{margin:0}
+#sv .row button{width:auto;flex-direction:row;justify-content:center;padding:10px 6px;font-size:12px;background:var(--panel);color:var(--fg);border-radius:11px}
+#sv .row button.ex{padding:10px 0;background:var(--acc);color:var(--accfg)}
+#sv .imp{width:100%;flex-direction:row;justify-content:center;gap:8px;padding:13px 0;font-size:14px;background:var(--acc);color:var(--accfg);border-radius:14px;margin-top:2px}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.08)}100%{transform:scale(1)}}
+#sv button.pop{animation:pop .26s ease-out}
 /* Меню дыр */
-#hm>div{width:min(300px,86vw);gap:10px}
+#hm>div{width:min(330px,90vw);gap:10px}
 #hm label,#hm .rw{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 4px}
 #hm label span,#hm .rw span{color:var(--fg);font-size:13px}
 #hm input{width:96px;font-size:16px;padding:8px 10px;text-align:right}
@@ -53,6 +58,7 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 #hm #hmf.off{opacity:.4;pointer-events:none}
 #hm #hmr{flex:none;width:96px;padding:9px 0}
 #hm small{color:var(--mut);font-size:11px;margin:0 4px}
+#hm .q.md button{font-size:12px;padding:12px 2px;white-space:normal;line-height:1.2}
 
 
 
@@ -106,10 +112,10 @@ button[data-a=size] i{transition:width .15s,height .15s,margin .15s}
 </div>
 <div id="tip" class="tp"><b></b><span></span></div>
 <div id="dlg"><div><p>Температура лавы, °C</p><input id="tin" type="number" inputmode="numeric" min="-273" max="1000000"><span>От −273 до 1 000 000. Ниже 100 °C лава застынет в сталь</span><div class="q"><button id="no">Отмена</button><button id="ok" class="on">OK</button></div></div></div>
-<div id="sv"><div><p>Сохранения</p><div id="svb" style="display:flex;flex-direction:column;gap:8px"></div></div></div>
+<div id="sv"><div><p>Сохранения</p><div id="svb" style="display:flex;flex-direction:column;gap:8px"></div><button class="imp" data-a="i"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2.5v9M3.2 7.8 7 11.6l3.8-3.8"/></svg>Импорт сохранения</button><input id="svf" type="file" accept=".txt,text/plain" hidden></div></div>
 <div id="hm"><div>
 <p id="hmt">Чёрная дыра</p>
-<div class="q"><button data-m="0">Статическая</button><button data-m="1">Настраиваемая</button></div>
+<div class="q md"><button data-m="0">По умолчанию</button><button data-m="1">Настраиваемая</button><button data-m="2" id="hmre">Реалистичная</button></div>
 <div id="hmf">
 <label><span>Скорость роста Ø, м/с</span><input id="hmv" type="text" inputmode="decimal" autocomplete="off"></label>
 <label><span>Мин. диаметр Ø, м</span><input id="hma" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -135,7 +141,7 @@ const BIG=2500,GROW=.5,BIGSPAN=2500,HOLD=600,CND=18;
    MPX — пикселей в метре для инструмента «Центр» */
 const BK=4,BANDR=4,DUR=2600,DEL=550,SG=280,MPX=30;
 /* Чёрная дыра: радиус поля BHR (px), сила BHK (как у «Центра» после ~4 с удержания), радиус ядра BHC (px), где частица телепортируется */
-const BHR=4*MPX,BHK=2,BHC=10;
+const BHR=4*MPX,BHK=2,BHC=10,RP0=3,RPK=.3,RPD=.3,SWL=.3,SWA=.6;
 /* Разрыв твёрдого притяжением: порог силы свой у каждого материала (GBM: 1 сталь — 5, 2 камень — 3,5, 3 лёд и прочее — 3, GMN — наименьший); сила выше порога — клетка готова к отрыву сразу, без задержки; но за такт (GTK кадров) отрывается лишь доля готовых (GFR, растёт с силой), вразброс по полю.
    SPN — искры при отрыве */
 const GBM=[0,5,3.5,3],GMN=3,GTK=4,GFR=.2,SPN=300,SPX=new Float32Array(SPN),SPY=new Float32Array(SPN),SVX=new Float32Array(SPN),SVY=new Float32Array(SPN),SPL=new Float32Array(SPN);let spi=0;
@@ -160,20 +166,21 @@ let bnd=0,gcx=0,gcy=0;
    и вылетает оттуда в случайную сторону почти с максимальной скоростью. Без белой дыры чёрная только втягивает.
    Белая дыра сама отталкивает всё в радиусе BHR с той же силой, с какой чёрная втягивает (без чёрной — просто обратный магнит; с чёрной — частицу втянуло, перенесло к белой и сразу отбросило) */
 let BH=null,WH=null;
-/* Настройки дыр. m: 0 — статическая (Ø по умолчанию, сила BHK), 1 — настраиваемая; v — скорость роста Ø (м/с), a — мин. Ø (м), b — макс. Ø (м, может быть ∞), k — сила (от 0,5, может быть ∞);
+/* Настройки дыр. m: 0 — по умолчанию (Ø по умолчанию, сила BHK), 1 — настраиваемая, 2 — реалистичная (только чёрная: p — очки массы, +RPK за поглощённую частицу, Ø = RPD·√p, сила = Ø); v — скорость роста Ø (м/с), a — мин. Ø (м), b — макс. Ø (м, может быть ∞), k — сила (от 0,5, может быть ∞);
    rp — у белой: отталкивание включено. У самой дыры t — секунды времени симуляции с момента установки (от него растёт Ø поля, поэтому пауза и ×2 действуют на рост).
    bR/bK и wR/wK — радиус поля (px) и сила чёрной и белой на текущем шаге; wR=0, если белой нет или отталкивание выключено */
 const HD=BHR*2/MPX,DMIN=.7,CFG={bh:{m:0,v:0,a:HD,b:HD,k:BHK},wh:{m:0,v:0,a:HD,b:HD,k:BHK,rp:1}};
-let bR=0,bK=0,wR=0,wK=0;
-const hrad=(o,c)=>c.m?Math.min(1e6,Math.min(c.b,c.a+c.v*o.t)*MPX/2):BHR,hstr=c=>c.m?Math.min(c.k,1e9):BHK;
+let bR=0,bK=0,wR=0,wK=0,bC=BHC,brl=0;const ab=[];
+const hrad=(o,c)=>c.m===2?Math.min(1e6,RPD*Math.sqrt(o.p)*MPX/2):c.m?Math.min(1e6,Math.min(c.b,c.a+c.v*o.t)*MPX/2):BHR,hstr=(o,c)=>c.m===2?Math.min(1e9,RPD*Math.sqrt(o.p)):c.m?Math.min(c.k,1e9):BHK,bcore=o=>CFG.bh.m===2?Math.max(4,hrad(o,CFG.bh)*.083):BHC;
 function hole(){
   if(BH)BH.t+=1/60;if(WH)WH.t+=1/60;
-  bR=BH?hrad(BH,CFG.bh):0;bK=BH?hstr(CFG.bh):0;
-  wR=WH&&CFG.wh.rp?hrad(WH,CFG.wh):0;wK=WH?hstr(CFG.wh):0;
+  brl=BH&&CFG.bh.m===2?1:0;
+  bR=BH?hrad(BH,CFG.bh):0;bK=BH?hstr(BH,CFG.bh):0;bC=BH?bcore(BH):BHC;
+  wR=WH&&CFG.wh.rp?hrad(WH,CFG.wh):0;wK=WH?hstr(WH,CFG.wh):0;
 }
 function tele(i){
-  const a=Math.random()*6.283,s=VM*(.55+.4*Math.random()),r=3+Math.random()*7,c=Math.cos(a),q=Math.sin(a);
-  X[i]=PX[i]=WH.x+c*r;Y[i]=PY[i]=WH.y+q*r;VX[i]=c*s;VY[i]=q*s;
+  const a=Math.random()*6.283,s=VM*(.55+.4*Math.random()),r=3+Math.random()*7,c=Math.cos(a),q=Math.sin(a),vc=Math.cos(a-SWA),vq=Math.sin(a-SWA);
+  X[i]=WH.x+c*r;Y[i]=WH.y+q*r;VX[i]=vc*s;VY[i]=vq*s;PX[i]=X[i]-VX[i]*.5;PY[i]=Y[i]-VY[i]*.5;
 }
 /* Радиус поля (px) и сила центра. Профиль силы gpr: максимум в центре, на внешних ~40% радиуса поле плавно слабеет до нуля у края */
 const gRad=()=>(3+.25*gcT)*MPX,gStr=()=>1+.25*gcT,gpr=u=>{const x=u/.4;return u*(x>=1?1:x*x*(3-2*x))};
@@ -503,14 +510,14 @@ function stepBodies(){
     }
     if(BH){
       const rg=bR/cell,dx=BH.x/cell-b.x,dy=BH.y/cell-b.y,d=Math.hypot(dx,dy);
-      if(d<Math.max(BHC/cell,b.rmax*.5)&&WH){
+      if(d<Math.max(bC/cell,b.rmax*.5)&&WH){
         const a=Math.random()*6.283,nx=WH.x/cell,ny=WH.y/cell;
         if(!hitT(b,nx,ny,b.a)){b.x=nx;b.y=ny;b.vx=Math.cos(a)*.5;b.vy=Math.sin(a)*.5;b.w=0}
-      }else if(d<rg&&d>.5){const f=3*GB*bK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+      }else if(d<rg&&d>.5){const f=3*GB*bK*gpr(1-d/rg),q=1-.03*(1-d/rg),sw=f*SWL;b.vx=(b.vx+dx/d*f+dy/d*sw)*q;b.vy=(b.vy+dy/d*f-dx/d*sw)*q;b.w*=q}
     }
     if(wR){
       const rg=wR/cell,dx=b.x-WH.x/cell,dy=b.y-WH.y/cell,d=Math.hypot(dx,dy);
-      if(d<rg&&d>.5){const f=3*GB*wK*gpr(1-d/rg),q=1-.03*(1-d/rg);b.vx=(b.vx+dx/d*f)*q;b.vy=(b.vy+dy/d*f)*q;b.w*=q}
+      if(d<rg&&d>.5){const f=3*GB*wK*gpr(1-d/rg),q=1-.03*(1-d/rg),sw=f*SWL;b.vx=(b.vx+dx/d*f+dy/d*sw)*q;b.vy=(b.vy+dy/d*f-dx/d*sw)*q;b.w*=q}
     }
     const sp=Math.hypot(b.vx,b.vy);if(sp>.7){b.vx*=.7/sp;b.vy*=.7/sp}
     const wm=.5/b.rmax;if(b.w>wm)b.w=wm;else if(b.w<-wm)b.w=-wm;
@@ -648,12 +655,13 @@ function stepFrame(){
       const ga=kk[i]===3?-G*.7*Math.min(1,Math.max(.1,.25+(tp[i]-100)*.0025)):G;
       let vx=vx_[i]+ga*gxx*dt,vy=vy_[i]+ga*gyy*dt;
       if(gcOn){const dx=gcx-x[i],dy=gcy-y[i],d=Math.hypot(dx,dy);if(d<gcR&&d>1){const uq=1-d/gcR,f=3*G*gcK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
-      if(BH){const dx=BH.x-x[i],dy=BH.y-y[i],d=Math.hypot(dx,dy);if(d<BHC&&WH){tele(i);continue}if(d<bR&&d>1){const uq=1-d/bR,f=3*G*bK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
-      if(wR){const dx=x[i]-WH.x,dy=y[i]-WH.y,d=Math.hypot(dx,dy);if(d<wR&&d>1){const uq=1-d/wR,f=3*G*wK*gpr(uq)*dt,q=1-.02*uq;vx=(vx+dx/d*f)*q;vy=(vy+dy/d*f)*q}}
+      if(BH){const dx=BH.x-x[i],dy=BH.y-y[i],d=Math.hypot(dx,dy);if(d<bC){if(WH){tele(i);continue}if(brl){ab.push(i);continue}}if(d<bR&&d>1){const uq=1-d/bR,f=3*G*bK*gpr(uq)*dt,q=1-.02*uq,sw=f*SWL;vx=(vx+dx/d*f+dy/d*sw)*q;vy=(vy+dy/d*f-dx/d*sw)*q}}
+      if(wR){const dx=x[i]-WH.x,dy=y[i]-WH.y,d=Math.hypot(dx,dy);if(d<wR&&d>1){const uq=1-d/wR,f=3*G*wK*gpr(uq)*dt,q=1-.02*uq,sw=f*SWL;vx=(vx+dx/d*f+dy/d*sw)*q;vy=(vy+dy/d*f-dx/d*sw)*q}}
       const v2=vx*vx+vy*vy;
       if(v2>VM2){const k=VM/Math.sqrt(v2);vx*=k;vy*=k}
       vx_[i]=vx;vy_[i]=vy;px[i]=x[i];py[i]=y[i];x[i]+=vx*dt;y[i]+=vy*dt;
     }
+    if(ab.length){for(let j=ab.length-1;j>=0;j--)rem(ab[j]);BH.p+=RPK*ab.length;ab.length=0}
     ddr();
     for(let i=0;i<n;i++){
       if(y[i]<lo||y[i]>hi){rem(i);i--;continue}
@@ -738,13 +746,13 @@ const hm=document.getElementById('hm'),hmf=document.getElementById('hmf'),hmr=do
 let hkey='bh',hmM=0,hmR=1;const HS={bh:0,wh:0};
 const hfmt=v=>v===Infinity?'∞':String(+v.toFixed(3));
 function hpn(s,inf){s=String(s).trim().replace(',','.');if(inf&&/^(∞|inf|беск)/i.test(s))return Infinity;const v=parseFloat(s);return isFinite(v)?v:NaN}
-function hmMode(m){hmM=m;hmB.forEach(x=>x.classList.toggle('on',+x.dataset.m===m));hmf.classList.toggle('off',!m);hmI.forEach(i=>i.disabled=!m)}
+function hmMode(m){hmM=m;hmB.forEach(x=>x.classList.toggle('on',+x.dataset.m===m));hmf.classList.toggle('off',m!==1);hmI.forEach(i=>i.disabled=m!==1)}
 function hmRp(r){hmR=r;hmr.classList.toggle('on',!!r);hmr.textContent=r?'Вкл':'Выкл'}
 function openHm(k){
   hkey=k;const c=CFG[k];
   document.getElementById('hmt').textContent=k==='bh'?'Чёрная дыра':'Белая дыра';
   hmI[0].value=hfmt(c.v);hmI[1].value=hfmt(c.a);hmI[2].value=hfmt(c.b);hmI[3].value=hfmt(c.k);
-  hmMode(c.m);hmw.style.display=k==='wh'?'':'none';if(k==='wh')hmRp(c.rp);
+  document.getElementById('hmre').style.display=k==='bh'?'':'none';hmMode(c.m);hmw.style.display=k==='wh'?'':'none';if(k==='wh')hmRp(c.rp);
   hm.classList.add('s');paused=true;
 }
 function closeHm(){hm.classList.remove('s');paused=false;hmI.forEach(i=>i.blur())}
@@ -757,7 +765,7 @@ document.getElementById('hmok').onclick=()=>{
   if(isNaN(v))v=c.v;if(isNaN(a))a=c.a;if(isNaN(b))b=c.b;if(isNaN(q))q=c.k;
   a=Math.max(DMIN,a);b=Math.max(a,b);v=Math.max(0,v);q=Math.max(.5,q);
   c.m=hmM;c.v=v;c.a=a;c.b=b;c.k=q;if(hkey==='wh')c.rp=hmR;
-  const o=hkey==='bh'?BH:WH;if(o)o.t=0;
+  const o=hkey==='bh'?BH:WH;if(o){o.t=0;o.p=RP0}
   closeHm();
 };
 document.getElementById('hmno').onclick=closeHm;
@@ -788,12 +796,28 @@ const e64=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.ap
 const d64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
 function store(k,v){try{localStorage.setItem(k,v);delete mem[k]}catch(e){mem[k]=v}}
 function fetchS(k){if(mem[k]!=null)return mem[k];try{return localStorage.getItem(k)}catch(e){return null}}
+const ei=v=>v===Infinity?'inf':v,di=(v,d)=>v==='inf'?Infinity:isFinite(+v)?+v:d,hcf=k=>{const c=CFG[k];return{m:c.m,v:c.v,a:c.a,b:ei(c.b),k:ei(c.k),rp:c.rp}};
+const bdb=document.querySelector('[data-a="bnd"]'),bhb=document.querySelector('[data-t="bh"]'),whb=document.querySelector('[data-t="wh"]');
+function applyEx(o){
+  if(!o)return;
+  zg=o.zg?1:0;zb.classList.toggle('on',!!zg);if(zg&&gon)gyroOff(gb);
+  bnd=o.bnd?1:0;bdb.classList.toggle('on',!!bnd);
+  thm=Array.isArray(o.thm)&&o.thm[0]<W&&o.thm[1]<Hh?{x:+o.thm[0],y:+o.thm[1]}:null;
+  for(const k of['bh','wh']){
+    const c=o.cfg&&o.cfg[k],t=CFG[k];if(!c)continue;
+    t.m=Math.min(k==='bh'?2:1,Math.max(0,c.m|0));t.v=Math.max(0,di(c.v,t.v));t.a=Math.max(DMIN,di(c.a,t.a));t.b=Math.max(t.a,di(c.b,t.b));t.k=Math.max(.5,di(c.k,t.k));if(k==='wh')t.rp=c.rp?1:0;
+  }
+  const hp=a=>Array.isArray(a)&&a[0]<W&&a[1]<Hh?{x:+a[0],y:+a[1],t:+a[2]||0,p:a[3]>0?+a[3]:RP0}:null;
+  BH=hp(o.bh);WH=hp(o.wh);
+  HS.bh=o.hs&&o.hs[0]?1:0;HS.wh=o.hs&&o.hs[1]?1:0;
+  bhb.firstChild.classList.toggle('r',!HS.bh);whb.firstChild.classList.toggle('r',!HS.wh);
+}
 function snap(){
   if(real)freezeAll();
   const t16=new Int16Array(S.length);for(let i=0;i<t16.length;i++)t16[i]=Math.max(-32768,Math.min(32767,Math.round(T[i])));
   const buf=new ArrayBuffer(n*17),f=new Float32Array(buf,0,n*3),hh=new Uint16Array(buf,n*12,n),u8=new Uint8Array(buf,n*14,n*3);
   for(let i=0;i<n;i++){f[i]=X[i];f[n+i]=Y[i];f[2*n+i]=TP[i];hh[i]=HT[i];u8[i]=K[i];u8[n+i]=PG[i];u8[2*n+i]=Math.round((SZ[i]-1)*200)}
-  return JSON.stringify({c:cols,r:rows,n:n,s:e64(S),t:e64(new Uint8Array(t16.buffer)),p:e64(new Uint8Array(buf)),src:srcs.map(s=>[s.x,s.y]),pt:Array.from(PT)});
+  return JSON.stringify({c:cols,r:rows,n:n,s:e64(S),t:e64(new Uint8Array(t16.buffer)),p:e64(new Uint8Array(buf)),src:srcs.map(s=>[s.x,s.y]),pt:Array.from(PT),ex:{zg:zg,bnd:bnd,thm:thm?[thm.x,thm.y]:null,bh:BH?[BH.x,BH.y,BH.t,BH.p]:null,wh:WH?[WH.x,WH.y,WH.t]:null,cfg:{bh:hcf('bh'),wh:hcf('wh')},hs:[HS.bh,HS.wh]}});
 }
 /* Загрузка с анимацией: старый уровень растворяется волной от центра, позже по следу идёт волна постройки нового.
    Фронт — ступенчатый «майнкрафтовский» круг: у каждого блока BK×BK клеток целочисленный номер кольца.
@@ -816,7 +840,7 @@ function startLoad(js){
   ORD=Uint32Array.from({length:N},(_,i)=>i);ORD.sort((a,b)=>DST[a]-DST[b]);
   AT=new Float64Array(N);
   PT.set(o.pt);PIN.fill(0);dropBodies();ptr=0;
-  an={t0:performance.now(),NS,NT,pl,pi:0,pc:0,pb:0,cxb,cyb,mx,rc:-1,r1:0,r2:0,srcs:o.src.map(a=>({x:a[0],y:a[1]})).filter(s=>s.x<W&&s.y<Hh)};
+  an={t0:performance.now(),NS,NT,pl,pi:0,pc:0,pb:0,cxb,cyb,mx,rc:-1,r1:0,r2:0,srcs:o.src.map(a=>({x:a[0],y:a[1]})).filter(s=>s.x<W&&s.y<Hh),ex:o.ex||null};
   closeSv();
 }
 function animStep(now){
@@ -828,7 +852,7 @@ function animStep(now){
   an.rc=rc;an.r1=r1;an.r2=r2;
   if(e>=DEL+DUR+30){
     while(an.pi<an.pl.length)addP(an.pl[an.pi++]);
-    srcs=an.srcs;wc=0;
+    srcs=an.srcs;applyEx(an.ex);wc=0;
     for(let i=0;i<n;i++){NF[i]=0;if(!K[i]||K[i]===3)wc++}
     fxEnd=now+3*SG+60;an=null;
   }
@@ -840,7 +864,7 @@ function rend(){
     if(!mt){svb.insertAdjacentHTML('beforeend',`<button class="slot" data-a="w" data-i="${i}">Слот ${i+1}<small>Пусто · нажмите, чтобы сохранить</small></button>`)}
     else{
       const d=new Date(+mt).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      svb.insertAdjacentHTML('beforeend',`<div class="row"><div class="nm">Слот ${i+1}<small>${d}</small></div><button data-a="w" data-i="${i}">Перезаписать</button><button data-a="l" data-i="${i}">Загрузить</button></div>`);
+      svb.insertAdjacentHTML('beforeend',`<div class="row"><div class="nm">Слот ${i+1}<small>${d}</small></div><button data-a="w" data-i="${i}">Перезаписать</button><button data-a="l" data-i="${i}">Загрузить</button><button class="ex" data-a="x" data-i="${i}" aria-label="Экспорт сохранения"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11.5v-9M3.2 6.2 7 2.4l3.8 3.8"/></svg></button></div>`);
     }
   }
 }
@@ -849,12 +873,37 @@ function closeSv(){svEl.classList.remove('s');paused=false}
 svEl.addEventListener('click',e=>{
   if(e.target===svEl){closeSv();return}
   const b=e.target.closest('button');if(!b)return;
+  pop(b);
   const i=+b.dataset.i;
-  if(b.dataset.a==='w'){try{store('whs'+i,snap());store('whm'+i,String(Date.now()))}catch(err){console.error(err);alert('Не удалось сохранить')}rend()}
+  if(b.dataset.a==='w'){try{store('whs'+i,snap());store('whm'+i,String(Date.now()))}catch(err){console.error(err);alert('Не удалось сохранить')}rend();const nb=svb.querySelector(`[data-a="w"][data-i="${i}"]`);if(nb)pop(nb)}
   else if(b.dataset.a==='l'){
     const js=fetchS('whs'+i);
     if(js){try{startLoad(js)}catch(err){console.error(err);an=null;alert('Не удалось загрузить сохранение')}}
   }
+  else if(b.dataset.a==='x')exportS(i);
+  else if(b.dataset.a==='i')svf.click();
+});
+const svf=document.getElementById('svf');
+function pop(b){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop')}
+svEl.addEventListener('animationend',e=>e.target.classList.remove('pop'));
+function exportS(i){
+  const js=fetchS('whs'+i);if(!js)return;
+  try{
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([js],{type:'text/plain;charset=utf-8'}));a.download='Вода_и_тепло_слот_'+(i+1)+'.txt';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(err){console.error(err);alert('Не удалось экспортировать сохранение')}
+}
+function chk(js){
+  const o=JSON.parse(js);
+  if(!o||!(o.c>0)||!(o.r>0)||!(o.n>=0)||typeof o.s!=='string'||typeof o.t!=='string'||typeof o.p!=='string'||!Array.isArray(o.pt)||!Array.isArray(o.src))throw new Error('format');
+  if(d64(o.s).length!==o.c*o.r||d64(o.t).length!==o.c*o.r*2||d64(o.p).length<o.n*17)throw new Error('size');
+}
+svf.addEventListener('change',()=>{
+  const f=svf.files&&svf.files[0];svf.value='';if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{const js=String(r.result).trim();try{chk(js);startLoad(js)}catch(err){console.error(err);an=null;alert('Не удалось загрузить файл сохранения')}};
+  r.onerror=()=>alert('Не удалось прочитать файл');
+  r.readAsText(f);
 });
 
 const pos=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
@@ -863,7 +912,7 @@ cv.addEventListener('pointerdown',e=>{
   if(an)return;
   cv.setPointerCapture(e.pointerId);[lx,ly]=pos(e);cx0=e.clientX;cy0=e.clientY;ptr=1;hold=0;ticks=0;hx=lx;hy=ly;
   lgid=0;if(tool==='lava'&&lm&&lavaT!==null){lgid=pgc=pgc%254+1;PT[lgid]=lavaT}
-  if(tool==='therm')thm={x:lx,y:ly};if(tool==='bh')BH={x:lx,y:ly,t:0};if(tool==='wh')WH={x:lx,y:ly,t:0};if(tool==='gcen')gcT=0;
+  if(tool==='therm')thm={x:lx,y:ly};if(tool==='bh')BH={x:lx,y:ly,t:0,p:RP0};if(tool==='wh')WH={x:lx,y:ly,t:0};if(tool==='gcen')gcT=0;
   apply(lx,ly);
 });
 cv.addEventListener('pointermove',e=>{
@@ -872,7 +921,7 @@ cv.addEventListener('pointermove',e=>{
     if(drawTool())line(lx,ly,x,y);
     else if((tool==='heat'||tool==='cold')&&Math.hypot(x-hx,y-hy)>=cell*3){ticks=0;hold=0;hx=x;hy=y;apply(x,y)}
     else if(tool==='therm')thm={x,y};
-    else if(tool==='bh'){if(BH){BH.x=x;BH.y=y}else BH={x,y,t:0}}
+    else if(tool==='bh'){if(BH){BH.x=x;BH.y=y}else BH={x,y,t:0,p:RP0}}
     else if(tool==='wh'){if(WH){WH.x=x;WH.y=y}else WH={x,y,t:0}}
   }
   lx=x;ly=y;
@@ -991,7 +1040,7 @@ function draw(){
   /* центр гравитации: кольцо поля и точка в месте удержания */
   if(gc){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.5)';ctx.beginPath();ctx.arc(lx,ly,gRad(),0,6.2832);ctx.stroke();ctx.fillStyle='rgba(138,108,255,.95)';ctx.beginPath();ctx.arc(lx,ly,3,0,6.2832);ctx.fill()}
   /* чёрная дыра: кольцо поля и тёмное ядро; белая дыра: светлое ядро. Убираются повторным нажатием на свою кнопку */
-  if(BH){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.35)';ctx.beginPath();ctx.arc(BH.x,BH.y,hrad(BH,CFG.bh),0,6.2832);ctx.stroke();ctx.fillStyle='#000';ctx.strokeStyle='rgb(138,108,255)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(BH.x,BH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
+  if(BH){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(138,108,255,.35)';ctx.beginPath();ctx.arc(BH.x,BH.y,hrad(BH,CFG.bh),0,6.2832);ctx.stroke();ctx.fillStyle='#000';ctx.strokeStyle='rgb(138,108,255)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(BH.x,BH.y,bcore(BH),0,6.2832);ctx.fill();ctx.stroke()}
   if(WH){if(CFG.wh.rp){ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,184,74,.35)';ctx.beginPath();ctx.arc(WH.x,WH.y,hrad(WH,CFG.wh),0,6.2832);ctx.stroke()}ctx.fillStyle='#fff';ctx.strokeStyle='rgb(255,184,74)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(WH.x,WH.y,BHC,0,6.2832);ctx.fill();ctx.stroke()}
   /* термометр: метка остаётся на поле, пока его не скроют повторным нажатием на инструмент */
   if(thm){
